@@ -1,0 +1,40 @@
+{
+  "name": "atom-react",
+  "version": "0.0.1",
+  "description": "An opiniated way to use ReactJS in a functional way in plain old Javascript, inspired by popular Clojurescript wrappers like Om ",
+  "keywords": [
+    "react",
+    "jsx",
+    "functional",
+    "lens",
+    "lenses",
+    "atom",
+    "immutable",
+    "immutability",
+    "pure"
+  ],
+  "author": "Sebastien Lorber",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/stample/atom-react.git"
+  },
+  "dependencies": {
+    "react": "~0.11.1",
+    "lodash": "~2.4.1",
+    "q": "~1.0.1"
+  },
+  "devDependencies": {
+    "gulp": "~3.8.6",
+    "gulp-util": "~2.2.20",
+    "gulp-browserify": "~0.2.3",
+    "gulp-uglify": "~0.3.1",
+    "gulp-rename": "~0.2.0",
+    "gulp-react": "~0.4.0",
+    "gulp-jasmine": "~0.2.0"
+  },
+  "main": "./src/atomReact",
+  "engines": {
+    "node": "*"
+  }
+}
