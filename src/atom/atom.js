@@ -121,7 +121,7 @@ Atom.prototype.cursor = function() {
 Atom.prototype.setPathValue = function(path,value) {
     var self = this;
     this.transact(function() {
-        var newState = AtomUtils.updatePathValue(self.get(),path,value);
+        var newState = AtomUtils.setPathValue(self.get(),path,value);
         self.swap(newState);
     });
 };
@@ -129,7 +129,7 @@ Atom.prototype.setPathValue = function(path,value) {
 Atom.prototype.unsetPathValue = function(path) {
     var self = this;
     this.transact(function() {
-        var newState = AtomUtils.updatePathValue(self.get(),path,undefined);
+        var newState = AtomUtils.setPathValue(self.get(),path,undefined);
         self.swap(newState);
     })
 

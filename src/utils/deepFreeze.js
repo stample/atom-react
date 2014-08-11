@@ -1,33 +1,29 @@
 
 'use strict'
 
-// TODO maybe disable freezing in production for better performances
-// Code taken from https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/freeze
-// Note that if "strict mode" is not set, modifying a frozen object will simply ignore modifications and not fail fast
 function deepFreeze(o) {
-    if ( !o ) {
-        return;
+    var isObject = (typeof o === "object" );
+    var isNull = (o === null);
+    var isAlreadyFrozenObject = (isObject && !isNull ? Object.isFrozen(o) : false);
+    var isUndefined = (typeof o === "undefined");
+    if ( !isObject || isNull || isAlreadyFrozenObject || isUndefined ) {
+        return o;
     }
     var prop, propKey;
     for (propKey in o) {
         try {
-            prop = o[propKey];
-            if (!o.hasOwnProperty(propKey) || !(typeof prop === "object") || !(typeof prop === "undefined") || Object.isFrozen(prop)) {
-                // If the object is on the prototype, not an object, or is already frozen,
-                // skip it. Note that this might leave an unfrozen reference somewhere in the
-                // object if there is an already frozen object containing an unfrozen object.
-                continue;
+            if ( o.hasOwnProperty(propKey) ) {
+                prop = o[propKey];
+                deepFreeze(prop);
             }
-            deepFreeze(prop); // Recursively call deepFreeze.
         } catch (error) {
-            throw new Error("Can't freeze property with key "+propKey+" because " + error.message);
+            throw new Error("Can't freeze property with key "+propKey+" and value "+prop+" because:\n " + error.message);
         }
     }
     try {
-        Object.freeze(o);
-        return o;
+        return Object.freeze(o);
     } catch (error) {
-        throw new Error("Can't freeze object "+o+" because of error "+error);
+        throw new Error("Can't freeze object "+o+" because of error:\n"+error);
     }
 }
 

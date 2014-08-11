@@ -36,7 +36,7 @@ function getPathValue(object,path) {
 exports.getPathValue = getPathValue;
 
 
-function updatePathValue(object,path,value) {
+function setPathValue(object,path,value) {
     try {
         if ( getPathValue(object,path) === value ) {
             return object;
@@ -52,7 +52,7 @@ function updatePathValue(object,path,value) {
         );
     }
 }
-exports.updatePathValue = updatePathValue;
+exports.setPathValue = setPathValue;
 
 
 
