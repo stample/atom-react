@@ -3,17 +3,24 @@
 var React = require("react/addons");
 var _ = require("lodash");
 
+
 var Preconditions = require("../utils/preconditions");
 
 
-function pathToReactUpdatePath(path,objectAtPath) {
+/**
+ * Transforms (["a","b","c"],objectAtPath) into {a: {b: {c: objectAtPath } } }
+ * @param path
+ * @param objectAtPath
+ * @return {*}
+ */
+function pathToObjectPath(path,objectAtPath) {
     if ( path.length == 0 ) {
         return objectAtPath;
     } else {
         var head = path[0];
         var tail = path.slice(1);
         var result = {};
-        result[head] = pathToReactUpdatePath(tail,objectAtPath);
+        result[head] = pathToObjectPath(tail,objectAtPath);
         return result;
     }
 }
@@ -22,7 +29,8 @@ function pathToReactUpdatePath(path,objectAtPath) {
 function getPathValue(object,path) {
     if ( path.length == 0 ) {
         return object;
-    } else {
+    }
+    else {
         var head = path[0];
         var tail = path.slice(1);
         var headValue = object[head];
@@ -36,13 +44,43 @@ function getPathValue(object,path) {
 exports.getPathValue = getPathValue;
 
 
+// Permits to know which part of a path already exists in the object
+function findDefinedPath(object,path,accu) {
+    accu = accu || [];
+    if ( path.length === 0 ) {
+        return accu;
+    }
+    else {
+        var head = path[0];
+        var tail = path.slice(1);
+        var headValue = object[head];
+        if ( Preconditions.hasValue(headValue) ) {
+            accu.push(head);
+            return findDefinedPath(headValue,tail,accu);
+        } else {
+            return accu;
+        }
+    }
+}
+
+
 function setPathValue(object,path,value) {
     try {
-        if ( getPathValue(object,path) === value ) {
+
+        var existingValue = getPathValue(object,path);
+        if ( existingValue === value ) {
             return object;
         }
-        var objectPath = pathToReactUpdatePath(path,{$set: value});
-        return React.addons.update(object, objectPath);
+
+        var definedPath = findDefinedPath(object,path);
+        var undefinedPath = path.slice(definedPath.length,path.length);
+        console.log("findDefinedPath",object,path,definedPath,undefinedPath);
+
+
+        var undefinedObjectPath = pathToObjectPath(undefinedPath,value);
+        var definedObjectPath = pathToObjectPath(definedPath,{$merge: undefinedObjectPath});
+        return React.addons.update(object, definedObjectPath);
+
     } catch (error) {
         // TODO we should probably create the missing path instead of raising the exception ?
         throw new Error(
@@ -85,11 +123,11 @@ exports.getKeyDiff = getKeyDiff;
 
 function getPathDiffRecursive(state1,state2,currentPath) {
     /*
-    console.error("-------------------------------");
-    console.debug("currentPath",currentPath);
-    console.debug("state 1",state1);
-    console.debug("state 2",state2);
-    */
+     console.error("-------------------------------");
+     console.debug("currentPath",currentPath);
+     console.debug("state 1",state1);
+     console.debug("state 2",state2);
+     */
     var oneIsUndefined = (!!state1 !== !!state2);
     if ( state1 === state2 || oneIsUndefined) {
         return [currentPath];

@@ -43,6 +43,7 @@ describe("AtomUtils.getPathValue", function() {
 describe("AtomUtils.setPathValue", function() {
 
 
+
     it("should be able to set an int attribute on an empty object", function() {
         var result = AtomUtils.setPathValue({},["attribute"],3);
         expect(result.attribute).toBe(3);
@@ -76,6 +77,14 @@ describe("AtomUtils.setPathValue", function() {
         expect(result.x2.y1).toBe(deeplyNestedObject.x2.y1);
         expect(result.x1).toBe(123);
     });
+
+
+    it("should be able to set a deep and unexisting attribute on an object", function() {
+        var empty = {x1: {y1: "existingValue"}};
+        var result = AtomUtils.setPathValue(empty,["x1","y2","z1","attribute"],"valueToSet");
+        expect(result.x1.y2.z1.attribute).toBe("valueToSet");
+    });
+
 
     it("should return the input object unmodified when setting an int to its already existing value", function() {
         var object = {
@@ -112,6 +121,7 @@ describe("AtomUtils.setPathValue", function() {
         var result = AtomUtils.setPathValue(object,["root","myobject"],object.root.myobject);
         expect(result).toBe(object);
     });
+
 
 
 });
