@@ -66,21 +66,15 @@ function findDefinedPath(object,path,accu) {
 
 function setPathValue(object,path,value) {
     try {
-
         var existingValue = getPathValue(object,path);
         if ( existingValue === value ) {
             return object;
         }
-
         var definedPath = findDefinedPath(object,path);
         var undefinedPath = path.slice(definedPath.length,path.length);
-        console.log("findDefinedPath",object,path,definedPath,undefinedPath);
-
-
         var undefinedObjectPath = pathToObjectPath(undefinedPath,value);
         var definedObjectPath = pathToObjectPath(definedPath,{$merge: undefinedObjectPath});
         return React.addons.update(object, definedObjectPath);
-
     } catch (error) {
         // TODO we should probably create the missing path instead of raising the exception ?
         throw new Error(
