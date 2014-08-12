@@ -139,7 +139,6 @@ AtomReactContext.prototype.start = function() {
 
 
 
-
 AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
     if ( this.perfMesureMode === "none" ) {
         task();
@@ -148,10 +147,17 @@ AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
         React.addons.Perf.start();
         task();
         React.addons.Perf.stop();
-        switch(this.perfMesureMode) {
-            case "wasted": React.addons.Perf.printWasted(); break;
-            case "inclusive": React.addons.Perf.printInclusive(); break;
-            case "exclusive": React.addons.Perf.printExclusive(); break;
+        try {
+            switch(this.perfMesureMode) {
+                case "wasted": React.addons.Perf.printWasted(); break;
+                case "inclusive": React.addons.Perf.printInclusive(); break;
+                case "exclusive": React.addons.Perf.printExclusive(); break;
+                default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
+            }
+        }
+        catch (error) {
+            console.error("Can't print React perf mesures: " + e.message);
+            console.error(e.stack);
         }
     }
 },
