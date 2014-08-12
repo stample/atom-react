@@ -60,7 +60,7 @@ describe("AtomUtils.setPathValue", function() {
         expect(result.attribute).toBe(objectAttribute);
     });
 
-    it("should be able to set an attribute on a deeply nested object", function() {
+    it("should be able to set an attribute on a deeply nested object that does not exist", function() {
         var deeplyNestedObject = {
             x1: 123,
             x2: {
@@ -71,8 +71,26 @@ describe("AtomUtils.setPathValue", function() {
                 }
             }
         };
-        var result = AtomUtils.setPathValue(deeplyNestedObject,["x2","y2","z1","attribute"],"valueToSet");
-        expect(result.x2.y2.z1.attribute).toBe("valueToSet");
+        var result = AtomUtils.setPathValue(deeplyNestedObject,["x2","y2","z1","beta","attribute"],"valueToSet");
+        expect(result.x2.y2.z1.beta.attribute).toBe("valueToSet");
+        expect(result.x2.y2.z2).toBe("toto");
+        expect(result.x2.y1).toBe(deeplyNestedObject.x2.y1);
+        expect(result.x1).toBe(123);
+    });
+
+    it("should be able to set an attribute on a deeply nested object that already exists", function() {
+        var deeplyNestedObject = {
+            x1: 123,
+            x2: {
+                y1: {},
+                y2: {
+                    z1: {},
+                    z2: "toto"
+                }
+            }
+        };
+        var result = AtomUtils.setPathValue(deeplyNestedObject,["x2","y2","z1"],"valueToSet");
+        expect(result.x2.y2.z1).toBe("valueToSet");
         expect(result.x2.y2.z2).toBe("toto");
         expect(result.x2.y1).toBe(deeplyNestedObject.x2.y1);
         expect(result.x1).toBe(123);

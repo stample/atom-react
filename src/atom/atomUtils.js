@@ -25,7 +25,7 @@ function pathToObjectPath(path,objectAtPath) {
     }
 }
 
-
+// TODO this can probably be a lot optimized
 function getPathValue(object,path) {
     if ( path.length == 0 ) {
         return object;
@@ -64,6 +64,7 @@ function findDefinedPath(object,path,accu) {
 }
 
 
+// TODO this can probably be a lot optimized
 function setPathValue(object,path,value) {
     try {
         var existingValue = getPathValue(object,path);
@@ -72,9 +73,14 @@ function setPathValue(object,path,value) {
         }
         var definedPath = findDefinedPath(object,path);
         var undefinedPath = path.slice(definedPath.length,path.length);
-        var undefinedObjectPath = pathToObjectPath(undefinedPath,value);
-        var definedObjectPath = pathToObjectPath(definedPath,{$merge: undefinedObjectPath});
-        return React.addons.update(object, definedObjectPath);
+        if ( undefinedPath.length === 0 ) {
+            var updateFunction = pathToObjectPath(definedPath,{$set: value});
+            return React.addons.update(object, updateFunction);
+        } else {
+            var undefinedObjectPath = pathToObjectPath(undefinedPath,value);
+            var updateFunction = pathToObjectPath(definedPath,{$merge: undefinedObjectPath});
+            return React.addons.update(object, updateFunction);
+        }
     } catch (error) {
         // TODO we should probably create the missing path instead of raising the exception ?
         throw new Error(
