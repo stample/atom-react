@@ -3,6 +3,7 @@
 var React = require("react/addons");
 var ReactLink = require("react/lib/ReactLink");
 var Preconditions = require("./utils/preconditions");
+var DeepFreeze = require("./utils/deepFreeze");
 
 var Atom = require("./atom/atom");
 var AtomReactContext = require("./atomReactContext");
@@ -131,4 +132,7 @@ function newStore(name,description) {
     return new AtomReactStore(name,description);
 }
 exports.newStore = newStore;
+
+exports.Preconditions = Preconditions
+exports.DeepFreeze = DeepFreeze
 
