@@ -76,8 +76,12 @@ var AtomReactContextAccessorMixin = {
     router: function() {
         return this.context.router;
     },
-    publish: function() {
-        this.context.publishEvent.apply(this,arguments);
+    publish: function(event) {
+        Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
+        this.context.publishEvent(event);
+    },
+    transact: function(tasks) {
+        this.context.atom.transact(tasks);
     }
 };
 
@@ -92,24 +96,24 @@ function addMixins(config) {
 
 
 
-function createPureClass(name,config) {
+function createPureClass(name,component) {
     Preconditions.checkHasValue(name,"The name attribute is mandatory: this helps to debug compoennts!")
-    Preconditions.checkHasValue(config,"The config attribute is mandatory!")
-    Preconditions.checkCondition(!config.initialState,"Pure components should not have any local state, and thus no initialState attribute");
-    Preconditions.checkCondition(!config.shouldComponentUpdate,"shouldComponentUpdate is already implemented for you");
-    Preconditions.checkCondition(config.render,"render() must be implemented");
-    Preconditions.checkCondition(config.propTypes,"propTypes must be provided: this is the component interface!");
+    Preconditions.checkHasValue(component,"The config attribute is mandatory!")
+    Preconditions.checkCondition(!component.initialState,"Pure components should not have any local state, and thus no initialState attribute");
+    Preconditions.checkCondition(!component.shouldComponentUpdate,"shouldComponentUpdate is already implemented for you");
+    Preconditions.checkCondition(component.render,"render() must be implemented");
+    Preconditions.checkCondition(component.propTypes,"propTypes must be provided: this is the component interface!");
 
     // Unfortunately, the displayName can't be infered from the variable name during JSX compilation :(
     // See http://facebook.github.io/react/docs/component-specs.html#displayname
-    config.displayName = name;
+    component.displayName = name;
     // Because React's displayName is not easy to obtain from a mixin (???)
-    config.getDisplayName = function() { return name };
+    component.getDisplayName = function() { return name };
 
 
-    addMixins(config);
+    addMixins(component);
 
-    return React.createClass(config);
+    return React.createClass(component);
 }
 exports.createPureClass = createPureClass;
 
@@ -138,10 +142,10 @@ exports.DeepFreeze = DeepFreeze
 
 
 
-var Event = function(eventName,eventData) {
+var AtomReactEvent = function(eventName,eventData) {
     Preconditions.checkHasValue(eventName,"Event name is mandatory");
     this.name = eventName;
     this.data = eventData;
     this.timestamp = new Date().getTime();
 };
-exports.Event = Event;
+exports.Event = AtomReactEvent;

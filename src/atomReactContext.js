@@ -91,7 +91,6 @@ AtomReactContext.prototype.reactToAtomChange = function(previousState) {
 
 AtomReactContext.prototype.handleEvent = function(event) {
     var self = this;
-    Preconditions.checkCondition(event instanceof Event,"Event fired is not an AtomReact.Event! " + event);
     // All events are treated inside a transaction
     this.atom.transact(function() {
         self.stores.forEach(function(store) {
