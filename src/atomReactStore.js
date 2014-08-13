@@ -37,6 +37,7 @@ AtomReactStoreManager.prototype.storeCursor = function() {
 
 
 AtomReactStoreManager.prototype.init = function() {
+    this.store.description.storeCursor = this.storeCursor();
     if ( this.store.description.init ) {
         this.store.description.init();
     } else {
