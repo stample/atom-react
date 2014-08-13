@@ -136,3 +136,12 @@ exports.newStore = newStore;
 exports.Preconditions = Preconditions
 exports.DeepFreeze = DeepFreeze
 
+
+
+var Event = function(eventName,eventData) {
+    Preconditions.checkHasValue(eventName,"Event name is mandatory");
+    this.name = eventName;
+    this.data = eventData;
+    this.timestamp = new Date().getTime();
+};
+exports.Event = Event;

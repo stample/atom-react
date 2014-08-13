@@ -50,11 +50,13 @@ AtomReactContext.prototype.setRouterInitializer = function(routerInitializer) {
 };
 
 
+// TODO we do not really build a router here
+// Should be reworked and router API must be thinked better
 AtomReactContext.prototype.buildRouter = function() {
     var routingCursor = this.atom.cursor().follow("routing");
     this.router.routingCursor = routingCursor;
     this.router.transact = this.atom.transact.bind(this.atom);
-    return this.router; // TODO we do not really build a router here
+    return this.router;
 }
 
 AtomReactContext.prototype.setMountNode = function(mountNode) {
@@ -87,13 +89,14 @@ AtomReactContext.prototype.reactToAtomChange = function(previousState) {
     });
 };
 
-AtomReactContext.prototype.handleEvent = function() {
-    var eventArguments = arguments;
+AtomReactContext.prototype.handleEvent = function(event) {
     var self = this;
+    Preconditions.checkCondition(event instanceof Event,"Event fired is not an AtomReact.Event! " + event);
+    // All events are treated inside a transaction
     this.atom.transact(function() {
         self.stores.forEach(function(store) {
             try {
-                store.storeManager.handleEvent.apply(store.storeManager,eventArguments);
+                store.storeManager.handleEvent(event);
             } catch (error) {
                 var errorMessage = "Store ["+store.store.name+"] could not handle event";
                 console.error(errorMessage,event)
