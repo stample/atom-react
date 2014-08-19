@@ -41,7 +41,7 @@ function shallowEqualProps(props, nextProps) {
 
 
 
-var AtomReactPureRenderMixin = {
+var WithPureRenderMixin = {
     shouldComponentUpdate: function(nextProps, nextState) {
         if ( nextState ) {
             throw new Error("AtomReact components should not have any local state! " + this.getDisplayName());
@@ -53,9 +53,11 @@ var AtomReactPureRenderMixin = {
         return shouldUpdate;
     }
 };
+exports.WithPureRenderMixin = WithPureRenderMixin;
 
 
-var AtomReactLinkedCursorMixin = {
+
+var WithCursorLinkingMixin = {
     linkCursor: function(cursor) {
         return new ReactLink(
             cursor.getOrElse(undefined),
@@ -65,33 +67,77 @@ var AtomReactLinkedCursorMixin = {
         );
     }
 };
+exports.WithCursorLinkingMixin = WithCursorLinkingMixin;
 
 
-var AtomReactContextAccessorMixin = {
+var WithRouterMixin = {
     contextTypes: {
-        router: React.PropTypes.object.isRequired,
-        atom: React.PropTypes.instanceOf(Atom).isRequired,
-        publishEvent: React.PropTypes.func.isRequired
+        router: React.PropTypes.object.isRequired
     },
     router: function() {
         return this.context.router;
-    },
-    publish: function(event) {
-        Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
-        this.context.publishEvent(event);
+    }
+};
+exports.WithRouterMixin = WithRouterMixin;
+
+
+var WithTransactMixin = {
+    contextTypes: {
+        atom: React.PropTypes.instanceOf(Atom).isRequired
     },
     transact: function(tasks) {
         this.context.atom.transact(tasks);
     }
 };
+exports.WithTransactMixin = WithTransactMixin;
 
+
+var WithEventPublisherMixin = {
+    contextTypes: {
+        publishEvent: React.PropTypes.func.isRequired
+    },
+    publish: function(event) {
+        Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
+        this.context.publishEvent(event);
+    }
+};
+exports.WithEventPublisherMixin = WithEventPublisherMixin;
+
+
+var WithEventListenerMixin = {
+    contextTypes: {
+        addEventListener: React.PropTypes.func.isRequired,
+        removeEventListener: React.PropTypes.func.isRequired
+    },
+    addEventListener: function(listener) {
+        this.context.addEventListener(listener);
+    },
+    removeEventListener: function(listener) {
+        this.context.removeEventListener(listener);
+    },
+    componentDidMount: function() {
+        if ( this.listenToEvents ) {
+            this.atomReactEventListener = this.listenToEvents.bind(this);
+            this.context.addEventListener(this.atomReactEventListener);
+        }
+    },
+    componentWillUnmount: function() {
+        if ( this.atomReactEventListener ) {
+            this.context.removeEventListener(this.atomReactEventListener);
+        }
+    }
+};
+exports.WithEventListenerMixin = WithEventListenerMixin;
 
 
 function addMixins(config) {
     config.mixins = config.mixins || [];
-    config.mixins.push(AtomReactPureRenderMixin);
-    config.mixins.push(AtomReactLinkedCursorMixin);
-    config.mixins.push(AtomReactContextAccessorMixin);
+    config.mixins.push(WithPureRenderMixin);
+    config.mixins.push(WithRouterMixin);
+    config.mixins.push(WithCursorLinkingMixin);
+    config.mixins.push(WithTransactMixin);
+    config.mixins.push(WithEventPublisherMixin);
+    config.mixins.push(WithEventListenerMixin);
 }
 
 

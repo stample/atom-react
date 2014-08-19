@@ -11,6 +11,7 @@ var AtomUtils = require("./atom/atomUtils");
 
 var AtomReactContext = function AtomReactContext() {
     this.stores = [];
+    this.eventListeners = [];
     this.router = undefined;
     this.mountNode = undefined;
     this.mountComponent = undefined;
@@ -41,6 +42,19 @@ AtomReactContext.prototype.addStore = function(store) {
     });
 };
 
+
+AtomReactContext.prototype.addEventListener = function(listener) {
+    this.eventListeners.push(listener);
+};
+
+AtomReactContext.prototype.removeEventListener = function(listener) {
+    var index = this.eventListeners.indexOf(listener);
+    if (index > -1) {
+        this.eventListeners.splice(index, 1);
+    }
+};
+
+
 AtomReactContext.prototype.setRouter = function(router) {
     this.router = router;
 };
@@ -57,7 +71,7 @@ AtomReactContext.prototype.buildRouter = function() {
     this.router.routingCursor = routingCursor;
     this.router.transact = this.atom.transact.bind(this.atom);
     return this.router;
-}
+};
 
 AtomReactContext.prototype.setMountNode = function(mountNode) {
     this.mountNode = mountNode;
@@ -95,10 +109,21 @@ AtomReactContext.prototype.handleEvent = function(event) {
     this.atom.transact(function() {
         self.stores.forEach(function(store) {
             try {
+                // TODO maybe stores should be regular event listeners?
                 store.storeManager.handleEvent(event);
             } catch (error) {
                 var errorMessage = "Store ["+store.store.name+"] could not handle event";
-                console.error(errorMessage,event)
+                console.error(errorMessage,event);
+                console.error(error.stack);
+                throw new Error(errorMessage);
+            }
+        });
+        self.eventListeners.forEach(function(listener) {
+            try {
+                listener(event);
+            } catch (error) {
+                var errorMessage = "Event listener ["+listener+"] could not handle event";
+                console.error(errorMessage,event);
                 console.error(error.stack);
                 throw new Error(errorMessage);
             }
@@ -173,7 +198,9 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var context = {
         router: this.buildRouter(),
         atom: this.atom,
-        publishEvent: this.handleEvent.bind(this)
+        publishEvent: this.handleEvent.bind(this),
+        addEventListener: this.addEventListener.bind(this),
+        removeEventListener: this.addEventListener.bind(this)
     };
     try {
         this.logStateBeforeRender(true);
