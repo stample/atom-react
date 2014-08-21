@@ -117,13 +117,12 @@ var WithEventListenerMixin = {
     },
     componentDidMount: function() {
         if ( this.listenToEvents ) {
-            this.atomReactEventListener = this.listenToEvents.bind(this);
-            this.context.addEventListener(this.atomReactEventListener);
+            this.context.addEventListener(this.listenToEvents);
         }
     },
     componentWillUnmount: function() {
-        if ( this.atomReactEventListener ) {
-            this.context.removeEventListener(this.atomReactEventListener);
+        if ( this.listenToEvents ) {
+            this.context.removeEventListener(this.listenToEvents);
         }
     }
 };
