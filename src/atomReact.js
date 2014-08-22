@@ -15,7 +15,7 @@ var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 
 function isSameValueOrCursor(value,nextValue) {
     if ( value instanceof AtomCursor && nextValue instanceof AtomCursor ) {
-        return value.getOrElse(undefined) === nextValue.getOrElse(undefined);
+        return value.originalValue === nextValue.originalValue;
     } else {
         return value === nextValue;
     }
@@ -178,9 +178,14 @@ exports.newContext = newContext;
 
 
 function newStore(name,description) {
-    return new AtomReactStore(name,description);
+    return new AtomReactStore.AtomReactStore(name,description);
 }
 exports.newStore = newStore;
+
+function newRouter(description) {
+    return new AtomReactStore.AtomReactRouter(description);
+}
+exports.newRouter = newRouter;
 
 exports.Preconditions = Preconditions
 exports.DeepFreeze = DeepFreeze

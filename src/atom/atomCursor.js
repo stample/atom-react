@@ -11,7 +11,10 @@ var AtomAsyncUtils = require("./atomAsyncUtils");
 var AtomCursor = function AtomCursor(atom,atomPath) {
     this.atom = atom;
     this.atomPath = atomPath;
-    this.atomValue = atom.getPathValue(atomPath); // TODO this probably can be optimized in some cases when navigating from a previous cursor
+
+    // This is needed to be able to compare cursors in should component update
+    // TODO maybe there's a better way?
+    this.originalValue = this.atom.getPathValue(this.atomPath);
 };
 
 
@@ -21,19 +24,24 @@ function ensureIsArray(maybeArray,message) {
     }
 }
 
+AtomCursor.prototype.value = function() {
+    return this.atom.getPathValue(this.atomPath);
+};
 
 AtomCursor.prototype.exists = function() {
-    return Preconditions.hasValue(this.atomValue);
+    return Preconditions.hasValue(this.value());
 };
 
 AtomCursor.prototype.get = function() {
-    Preconditions.checkCondition(this.exists(),"No value for path " + this.atomPath + " -> maybe you want to use " +
+    var value = this.value();
+    Preconditions.checkHasValue(value,"No value for path " + this.atomPath + " -> maybe you want to use " +
         "cursor.getOrElse(undefined) instead if the value you look for may be absent when the cursor is created ");
-    return this.atomValue;
+    return value;
 };
 
 AtomCursor.prototype.getOrElse = function(fallback) {
-    return this.atomValue || fallback;
+    var value = this.value();
+    return Preconditions.hasValue(value) ? value : fallback;
 };
 
 
@@ -46,13 +54,13 @@ AtomCursor.prototype.unset = function() {
 
 
 AtomCursor.prototype.push = function(value) {
-    var list = this.atomValue || [];
+    var list = this.getOrElse([]);
     ensureIsArray(list,"can only call push on an array. "+this.atomPath);
     var newList = list.concat([value]);
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.without = function(value) {
-    var list = this.atomValue;
+    var list = this.value();
     ensureIsArray(list,"can only call without on an array. "+this.atomPath);
     var newList = _.without(list,value);
     this.atom.setPathValue(this.atomPath,newList);
@@ -60,8 +68,9 @@ AtomCursor.prototype.without = function(value) {
 
 
 AtomCursor.prototype.update = function(updateFunction) {
-    if ( !Preconditions.hasValue(this.atomValue) ) throw new Error("you can't update an unexisting value. " + this.atomPath);
-    var valueToSet = updateFunction(this.atomValue);
+    var value = this.value();
+    if ( !Preconditions.hasValue(value) ) throw new Error("you can't update an unexisting value. " + this.atomPath);
+    var valueToSet = updateFunction(value);
     this.atom.setPathValue(this.atomPath,valueToSet);
 };
 AtomCursor.prototype.plus = function(number) {
@@ -78,7 +87,7 @@ AtomCursor.prototype.follow = function() {
 };
 
 AtomCursor.prototype.list = function() {
-    var list = this.atomValue;
+    var list = this.value();
     ensureIsArray(list,"can only call list on an array. "+this.atomPath);
     return list.map(function(item,index) {
         return this.follow(index);
@@ -86,7 +95,8 @@ AtomCursor.prototype.list = function() {
 };
 
 AtomCursor.prototype.asyncSuccess = function() {
-    if ( Preconditions.hasValue(this.atomValue) && this.atomValue.isSuccess() ) {
+    var value = this.value();
+    if ( Preconditions.hasValue(value) && value.isSuccess() ) {
         return this.asyncSuccessUnsafe();
     } else {
         throw new Error("You can't follow an async value that is not successfully loaded.  Path="+this.atomPath);

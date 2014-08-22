@@ -15,8 +15,8 @@ var AtomReactContext = function AtomReactContext() {
     this.router = undefined;
     this.mountNode = undefined;
     this.mountComponent = undefined;
-    this.routerInitializer = undefined;
-    this.perfMesureMode = "wasted";
+    this.perfMesureMode = "none";
+    this.verboseStateChangeLog = false;
 
     this.atom = new Atom({
         initialState: {
@@ -30,16 +30,36 @@ var AtomReactContext = function AtomReactContext() {
 module.exports = AtomReactContext;
 
 
+AtomReactContext.prototype.debugMode = function() {
+    this.setPerfMesureMode("wasted");
+    this.setVerboseStateChangeLog(true);
+};
+
 AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
     this.perfMesureMode = perfMesureMode;
 };
 
+AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
+    this.verboseStateChangeLog = bool;
+};
+
+
 
 AtomReactContext.prototype.addStore = function(store) {
+    if ( store.description.reactToChange ) {
+        console.warn("Store [",store.name,"] should rather not implement reactToChange because it will be removed in the future");
+    }
     this.stores.push({
         store: store,
         storeManager: store.createStoreManager(this.atom)
     });
+};
+
+AtomReactContext.prototype.setRouter = function(router) {
+    this.router = {
+        router: router,
+        routerManager: router.createStoreManager(this.atom)
+    };
 };
 
 
@@ -52,15 +72,6 @@ AtomReactContext.prototype.removeEventListener = function(listener) {
     if (index > -1) {
         this.eventListeners.splice(index, 1);
     }
-};
-
-
-AtomReactContext.prototype.setRouter = function(router) {
-    this.router = router;
-};
-
-AtomReactContext.prototype.setRouterInitializer = function(routerInitializer) {
-    this.routerInitializer = routerInitializer;
 };
 
 
@@ -107,6 +118,16 @@ AtomReactContext.prototype.handleEvent = function(event) {
     var self = this;
     // All events are treated inside a transaction
     this.atom.transact(function() {
+        try {
+            // TODO maybe stores should be regular event listeners?
+            self.router.routerManager.handleEvent(event);
+        } catch (error) {
+            var errorMessage = "Router could not handle event";
+            console.error(errorMessage,event);
+            console.error(error.stack);
+            throw new Error(errorMessage);
+        }
+
         self.stores.forEach(function(store) {
             try {
                 // TODO maybe stores should be regular event listeners?
@@ -133,6 +154,14 @@ AtomReactContext.prototype.handleEvent = function(event) {
 
 
 AtomReactContext.prototype.initStores = function() {
+    try {
+        this.router.routerManager.init();
+    } catch (error) {
+        var errorMessage = "Router could not be initialized";
+        console.error(errorMessage)
+        console.error(error.stack);
+        throw new Error(errorMessage);
+    }
     this.stores.forEach(function(store) {
         try {
             store.storeManager.init();
@@ -157,9 +186,6 @@ AtomReactContext.prototype.start = function() {
     var self = this;
     this.atom.transact(function() {
         self.initStores();
-        if ( self.routerInitializer ) {
-            self.routerInitializer(self.buildRouter());
-        }
     });
 };
 
@@ -203,7 +229,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
         removeEventListener: this.addEventListener.bind(this)
     };
     try {
-        this.logStateBeforeRender(true);
+        this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
         React.withContext(context,function() {
             React.renderComponent(
@@ -219,8 +245,8 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
 };
 
 
-AtomReactContext.prototype.logStateBeforeRender = function(verbose) {
-    if ( verbose ) {
+AtomReactContext.prototype.logStateBeforeRender = function() {
+    if ( this.verboseStateChangeLog ) {
         var previousState = this.lastRenderedState;
         var currentState = this.atom.get();
         this.lastRenderedState = currentState;
