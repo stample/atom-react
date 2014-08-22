@@ -68,6 +68,18 @@ AtomReactStoreManager.prototype.init = function() {
     }
 };
 
+AtomReactStoreManager.prototype.prepare = function() {
+    var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
+    this.store.description[cursorAttributeName] = this.storeCursor();
+
+    // TODO these should probably be deleted as the store is supposed to only change on events!
+    // (And events are already handled in transactions)
+    var currentState = this.atom.get();
+    this.store.description.atom = this.atom;
+    this.store.description.state = currentState;
+    this.store.description.routing = currentState.routing;
+    this.store.description.transact = this.atom.transact.bind(this.store.description);
+};
 
 
 
@@ -78,36 +90,14 @@ AtomReactStoreManager.prototype.init = function() {
 // TODO this is a bad idea and should be removed!
 AtomReactStoreManager.prototype.reactToChange = function(previousState) {
     if ( this.store.description.reactToChange ) {
-
-        var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
-        this.store.description[cursorAttributeName] = this.storeCursor();
-
-        // TODO these should probably be deleted as the store is supposed to only change on events!
-        // (And events are already handled in transactions)
-        var currentState = this.atom.get();
-        this.store.description.atom = this.atom;
-        this.store.description.state = currentState;
-        this.store.description.routing = currentState.routing;
-        this.store.description.transact = this.atom.transact.bind(this.store.description);
-
-        this.store.description.reactToChange(previousState,currentState);
+        this.prepare();
+        this.store.description.reactToChange(previousState,this.atom.get());
     }
 };
 
 AtomReactStoreManager.prototype.handleEvent = function(event) {
     if ( this.store.description.handleEvent ) {
-
-        var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
-        this.store.description[cursorAttributeName] = this.storeCursor();
-
-        // TODO these should probably be deleted as the store is supposed to only change on events!
-        // (And events are already handled in transactions)
-        var currentState = this.atom.get();
-        this.store.description.atom = this.atom;
-        this.store.description.state = currentState;
-        this.store.description.routing = currentState.routing;
-        this.store.description.transact = this.atom.transact.bind(this.store.description);
-
+        this.prepare();
         this.store.description.handleEvent(event);
     }
 };

@@ -75,15 +75,6 @@ AtomReactContext.prototype.removeEventListener = function(listener) {
 };
 
 
-// TODO we do not really build a router here
-// Should be reworked and router API must be thinked better
-AtomReactContext.prototype.buildRouter = function() {
-    var routingCursor = this.atom.cursor().follow("routing");
-    this.router.routingCursor = routingCursor;
-    this.router.transact = this.atom.transact.bind(this.atom);
-    return this.router;
-};
-
 AtomReactContext.prototype.setMountNode = function(mountNode) {
     this.mountNode = mountNode;
 };
@@ -221,8 +212,10 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var props = {
         appStateCursor: this.atom.cursor()
     };
+
+    this.router.routerManager.prepare();
     var context = {
-        router: this.buildRouter(),
+        router: this.router.router.description,
         atom: this.atom,
         publishEvent: this.handleEvent.bind(this),
         addEventListener: this.addEventListener.bind(this),
