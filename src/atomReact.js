@@ -75,6 +75,8 @@ var WithRouterMixin = {
         router: React.PropTypes.object.isRequired
     },
     router: function() {
+        console.warn("You should not use this.router() anymore as it is deprecated and will be removed soon. " +
+            "You can interact with the routing store by publishing events");
         return this.context.router;
     }
 };
