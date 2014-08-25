@@ -58,15 +58,6 @@ AtomReactStoreManager.prototype.isRouter = function() {
 };
 
 
-AtomReactStoreManager.prototype.init = function() {
-    var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
-    this.store.description[cursorAttributeName] = this.storeCursor();
-    if ( this.store.description.init ) {
-        this.store.description.init();
-    } else {
-        this.storeCursor().set({});
-    }
-};
 
 AtomReactStoreManager.prototype.prepare = function() {
     var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
@@ -81,6 +72,18 @@ AtomReactStoreManager.prototype.prepare = function() {
     this.store.description.transact = this.atom.transact.bind(this.store.description);
 };
 
+
+
+AtomReactStoreManager.prototype.init = function() {
+    var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
+    this.prepare();
+    this.store.description[cursorAttributeName] = this.storeCursor();
+    if ( this.store.description.init ) {
+        this.store.description.init();
+    } else {
+        this.storeCursor().set({});
+    }
+};
 
 
 // TODO add forbidden store description attributes to avoid overriding
