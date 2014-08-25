@@ -58,7 +58,7 @@ AtomReactStoreManager.prototype.isRouter = function() {
 };
 
 
-
+// TODO probably not very elegant code
 AtomReactStoreManager.prototype.prepare = function() {
     var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
     this.store.description[cursorAttributeName] = this.storeCursor();
@@ -69,7 +69,7 @@ AtomReactStoreManager.prototype.prepare = function() {
     this.store.description.atom = this.atom;
     this.store.description.state = currentState;
     this.store.description.routing = currentState.routing;
-    this.store.description.transact = this.atom.transact.bind(this.store.description);
+    this.store.description.transact = this.atom.transact.bind(this.atom);
 };
 
 

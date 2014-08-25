@@ -105,7 +105,7 @@ AtomReactContext.prototype.reactToAtomChange = function(previousState) {
     });
 };
 
-AtomReactContext.prototype.handleEvent = function(event) {
+AtomReactContext.prototype.publishEvent = function(event) {
     var self = this;
     // All events are treated inside a transaction
     this.atom.transact(function() {
@@ -217,7 +217,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var context = {
         router: this.router.router.description,
         atom: this.atom,
-        publishEvent: this.handleEvent.bind(this),
+        publishEvent: this.publishEvent.bind(this),
         addEventListener: this.addEventListener.bind(this),
         removeEventListener: this.addEventListener.bind(this)
     };
