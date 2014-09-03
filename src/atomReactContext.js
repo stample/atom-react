@@ -106,6 +106,7 @@ AtomReactContext.prototype.reactToAtomChange = function(previousState) {
 };
 
 AtomReactContext.prototype.publishEvent = function(event) {
+    console.debug("publishing event:",event);
     var self = this;
     // All events are treated inside a transaction
     this.atom.transact(function() {
