@@ -59,6 +59,12 @@ AtomCursor.prototype.push = function(value) {
     var newList = list.concat([value]);
     this.atom.setPathValue(this.atomPath,newList);
 };
+AtomCursor.prototype.unshift = function(value) {
+    var list = this.getOrElse([]);
+    ensureIsArray(list,"can only call unshift on an array. "+this.atomPath);
+    var newList = [value].concat(list);
+    this.atom.setPathValue(this.atomPath,newList);
+};
 AtomCursor.prototype.without = function(value) {
     var list = this.value();
     ensureIsArray(list,"can only call without on an array. "+this.atomPath);
