@@ -17,6 +17,8 @@ var AtomReactContext = function AtomReactContext() {
     this.mountComponent = undefined;
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
+    this.lastRoutingState = undefined;
+    this.onRoutingChangeCallback = undefined;
 
     this.atom = new Atom({
         initialState: {
@@ -74,6 +76,10 @@ AtomReactContext.prototype.removeEventListener = function(listener) {
     }
 };
 
+AtomReactContext.prototype.onRoutingChange = function(callback) {
+    this.onRoutingChangeCallback = callback;
+};
+
 
 AtomReactContext.prototype.setMountNode = function(mountNode) {
     this.mountNode = mountNode;
@@ -84,12 +90,19 @@ AtomReactContext.prototype.setMountComponent = function(mountComponent) {
 };
 
 
-
-
 AtomReactContext.prototype.onAtomChange = function() {
+    this.handleRoutingChange();
     this.printReactPerfMesuresAround(
         this.renderCurrentAtomState.bind(this)
     );
+};
+
+AtomReactContext.prototype.handleRoutingChange = function() {
+    var routingState = this.atom.get().routing;
+    if ( routingState !== this.lastRoutingState && this.onRoutingChangeCallback ) {
+        this.onRoutingChangeCallback(routingState,this.lastRoutingState);
+        this.lastRoutingState = routingState;
+    }
 };
 
 AtomReactContext.prototype.reactToAtomChange = function(previousState) {
