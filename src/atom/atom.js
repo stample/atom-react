@@ -9,7 +9,7 @@ var AtomUtils = require("./atomUtils");
 var AtomCursor = require("./atomCursor");
 
 
-function noop() { } // Convenient but probably not performant: TODO ?
+var NOOP = function noop() { } // Convenient but probably not performant: TODO ?
 
 /**
  * Creates an Atom
@@ -18,9 +18,9 @@ function noop() { } // Convenient but probably not performant: TODO ?
  * @constructor
  */
 var Atom = function Atom(options) {
-    this.state = options.initialState || {};
-    this.onChange = options.onChange || noop;
-    this.reactToChange = options.reactToChange || noop;
+    this.state = {};
+    this.beforeTransactionCommit = options.beforeTransactionCommit || NOOP;
+    this.afterTransactionCommit = options.afterTransactionCommit || NOOP;
     this.currentTransactionState = undefined;
     DeepFreeze(this.state);
 };
@@ -35,23 +35,7 @@ Atom.prototype.swap = function(newState) {
         throw new Error("It is forbidden to swap the atom outside of a transaction");
     }
     DeepFreeze(newState);
-    var previousState = this.currentTransactionState;
     this.currentTransactionState = newState;
-
-    // TODO should be allow cascading reactions? this could lead to cyclic effects :(
-    if ( !this.currentlyReactingToChanges ) {
-        this.currentlyReactingToChanges = true;
-        try {
-            this.reactToChange(previousState);
-        }
-            // TODO do something more clever?
-        finally {
-            this.currentlyReactingToChanges = false;
-        }
-    }
-    if ( !this.isInTransaction() ) {
-        this.onChange();
-    }
 };
 
 
@@ -65,10 +49,13 @@ Atom.prototype.commitTransaction = function() {
     var transactionState = this.currentTransactionState;
     this.currentTransactionState = undefined
     this.state = transactionState;
-    this.onChange();
 };
 Atom.prototype.rollbackTransaction = function() {
     this.currentTransactionState = undefined
+};
+
+Atom.prototype.transactionHasChanges = function() {
+    return (this.state !== this.currentTransactionState)
 };
 
 
@@ -81,7 +68,16 @@ Atom.prototype.transact = function(tasks) {
         this.openTransaction();
         try {
             tasks();
+            var transactionHasChanges = this.transactionHasChanges();
+            // TODO forbid atom modifications in this callback
+            this.beforeTransactionCommit(transactionHasChanges);
             this.commitTransaction();
+            try {
+                this.afterTransactionCommit(transactionHasChanges);
+            } catch (error) {
+                console.error("The 'afterTransactionCommit' callback could not be executed. " +
+                    "Note that it won't produce a transaction rollback",error.message,error.stack);
+            }
         } catch (error) {
             console.error("Error during atom transaction!",error.message,this);
             console.error(error.stack);

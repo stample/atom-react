@@ -48,7 +48,7 @@ var WithPureRenderMixin = {
         }
         var shouldUpdate = !shallowEqualProps(this.props, nextProps);
         if ( shouldUpdate ) {
-            console.debug("["+this.getDisplayName()+"] should update!")
+            //console.debug("["+this.getDisplayName()+"] should update!")
         }
         return shouldUpdate;
     }
@@ -68,19 +68,6 @@ var WithCursorLinkingMixin = {
     }
 };
 exports.WithCursorLinkingMixin = WithCursorLinkingMixin;
-
-
-var WithRouterMixin = {
-    contextTypes: {
-        router: React.PropTypes.object.isRequired
-    },
-    router: function() {
-        console.warn("You should not use this.router() anymore as it is deprecated and will be removed soon. " +
-            "You can interact with the routing store by publishing events");
-        return this.context.router;
-    }
-};
-exports.WithRouterMixin = WithRouterMixin;
 
 
 var WithTransactMixin = {
@@ -134,7 +121,6 @@ exports.WithEventListenerMixin = WithEventListenerMixin;
 function addMixins(config) {
     config.mixins = config.mixins || [];
     config.mixins.push(WithPureRenderMixin);
-    config.mixins.push(WithRouterMixin);
     config.mixins.push(WithCursorLinkingMixin);
     config.mixins.push(WithTransactMixin);
     config.mixins.push(WithEventPublisherMixin);

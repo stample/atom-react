@@ -58,22 +58,14 @@ AtomReactStoreManager.prototype.isRouter = function() {
 };
 
 
-// TODO probably not very elegant code
+// TODO probably not very elegant and secure code, could be overrided
 AtomReactStoreManager.prototype.prepare = function() {
     var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
     this.store.description[cursorAttributeName] = this.storeCursor();
-
-    // TODO these should probably be deleted as the store is supposed to only change on events!
-    // (And events are already handled in transactions)
-    var currentState = this.atom.get();
-    this.store.description.atom = this.atom;
-    this.store.description.state = currentState;
-    this.store.description.routing = currentState.routing;
-    this.store.description.transact = this.atom.transact.bind(this.atom);
 };
 
 
-
+// TODO this should be removed in favor of bootstrap event
 AtomReactStoreManager.prototype.init = function() {
     var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
     this.prepare();
@@ -86,17 +78,6 @@ AtomReactStoreManager.prototype.init = function() {
 };
 
 
-// TODO add forbidden store description attributes to avoid overriding
-
-// TODO think about what would be the best api to expose on stores!
-
-// TODO this is a bad idea and should be removed!
-AtomReactStoreManager.prototype.reactToChange = function(previousState) {
-    if ( this.store.description.reactToChange ) {
-        this.prepare();
-        this.store.description.reactToChange(previousState,this.atom.get());
-    }
-};
 
 AtomReactStoreManager.prototype.handleEvent = function(event) {
     if ( this.store.description.handleEvent ) {

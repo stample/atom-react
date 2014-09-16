@@ -19,14 +19,11 @@ var AtomReactContext = function AtomReactContext() {
     this.verboseStateChangeLog = false;
     this.lastRoutingState = undefined;
     this.onRoutingChangeCallback = undefined;
+    this.logPublishedEvents = false;
 
     this.atom = new Atom({
-        initialState: {
-            routing: {},
-            stores: {}
-        },
-        onChange: this.onAtomChange.bind(this),
-        reactToChange: this.reactToAtomChange.bind(this)
+        beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
+        afterTransactionCommit: this.afterTransactionCommit.bind(this)
     });
 };
 module.exports = AtomReactContext;
@@ -35,6 +32,7 @@ module.exports = AtomReactContext;
 AtomReactContext.prototype.debugMode = function() {
     this.setPerfMesureMode("wasted");
     this.setVerboseStateChangeLog(true);
+    this.setLogPublishedEvents(true);
 };
 
 AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
@@ -44,12 +42,18 @@ AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
 AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
     this.verboseStateChangeLog = bool;
 };
+AtomReactContext.prototype.setLogPublishedEvents = function(bool) {
+    this.logPublishedEvents = bool;
+};
 
 
 
 AtomReactContext.prototype.addStore = function(store) {
     if ( store.description.reactToChange ) {
-        console.warn("Store [",store.name,"] should rather not implement reactToChange because it will be removed in the future");
+        console.warn("Store [",store.name,"] should rather not implement 'reactToChange' because it will be removed in the future");
+    }
+    if ( store.description.init ) {
+        console.warn("Store [",store.name,"] should rather not implement 'init' because it will be removed in the future");
     }
     this.stores.push({
         store: store,
@@ -90,11 +94,18 @@ AtomReactContext.prototype.setMountComponent = function(mountComponent) {
 };
 
 
-AtomReactContext.prototype.onAtomChange = function() {
+AtomReactContext.prototype.beforeTransactionCommit = function(transactionHasChanges) {
+    if ( transactionHasChanges ) {
+        this.printReactPerfMesuresAround(
+            this.renderCurrentAtomState.bind(this)
+        );
+    } else {
+        // console.debug("Will not render because atom state has not changed");
+    }
+};
+AtomReactContext.prototype.afterTransactionCommit = function(transactionHasChanges) {
     this.handleRoutingChange();
-    this.printReactPerfMesuresAround(
-        this.renderCurrentAtomState.bind(this)
-    );
+    //console.debug("Succesful app rendering. Atom transaction commited with state:",this.atom.get());
 };
 
 AtomReactContext.prototype.handleRoutingChange = function() {
@@ -105,21 +116,10 @@ AtomReactContext.prototype.handleRoutingChange = function() {
     }
 };
 
-AtomReactContext.prototype.reactToAtomChange = function(previousState) {
-    this.stores.forEach(function(store) {
-        try {
-            store.storeManager.reactToChange(previousState);
-        } catch (error) {
-            var errorMessage = "Store ["+store.store.name+"] could not react to atom changes";
-            console.error(errorMessage)
-            console.error(error.stack);
-            throw new Error(errorMessage);
-        }
-    });
-};
-
 AtomReactContext.prototype.publishEvent = function(event) {
-    console.debug("publishing event:",event);
+    if ( this.logPublishedEvents ) {
+        console.debug("Publishing event:",event);
+    }
     var self = this;
     // All events are treated inside a transaction
     this.atom.transact(function() {
@@ -157,7 +157,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
     })
 };
 
-
+// TODO this should be removed in favor of a bootstrap event
 AtomReactContext.prototype.initStores = function() {
     try {
         this.router.routerManager.init();
@@ -181,7 +181,7 @@ AtomReactContext.prototype.initStores = function() {
 
 
 
-AtomReactContext.prototype.start = function() {
+AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
     Preconditions.checkHasValue(this.mountComponent,"Mount component is mandatory");
     Preconditions.checkHasValue(this.mountNode,"Mount node is mandatory");
     Preconditions.checkHasValue(this.stores,"Stores array is mandatory");
@@ -190,7 +190,8 @@ AtomReactContext.prototype.start = function() {
 
     var self = this;
     this.atom.transact(function() {
-        self.initStores();
+        self.initStores(); // TODO should be removed. Stores should be initialized with a bootstrap event only
+        self.publishEvent(bootstrapEvent);
     });
 };
 
@@ -218,7 +219,7 @@ AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
             console.error(e.stack);
         }
     }
-},
+};
 
 
 AtomReactContext.prototype.renderCurrentAtomState = function() {
@@ -229,7 +230,6 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
 
     this.router.routerManager.prepare();
     var context = {
-        router: this.router.router.description,
         atom: this.atom,
         publishEvent: this.publishEvent.bind(this),
         addEventListener: this.addEventListener.bind(this),
@@ -248,6 +248,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     } catch (error) {
         console.error("Could not render application with state\n",this.atom.get());
         console.error(error.stack);
+        throw new Error("Could not render application");
     }
 };
 
