@@ -17,8 +17,8 @@ var AtomReactContext = function AtomReactContext() {
     this.mountComponent = undefined;
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
-    this.lastRoutingState = undefined;
-    this.onRoutingChangeCallback = undefined;
+    this.beforeRenderCallback = undefined;
+    this.beforeRenderCallback = undefined;
     this.logPublishedEvents = false;
 
     this.atom = new Atom({
@@ -77,11 +77,16 @@ AtomReactContext.prototype.removeEventListener = function(listener) {
     var index = this.eventListeners.indexOf(listener);
     if (index > -1) {
         this.eventListeners.splice(index, 1);
+    } else {
+        throw new Error("listener not found");
     }
 };
 
-AtomReactContext.prototype.onRoutingChange = function(callback) {
-    this.onRoutingChangeCallback = callback;
+AtomReactContext.prototype.beforeRender = function(callback) {
+    this.beforeRenderCallback = callback;
+};
+AtomReactContext.prototype.afterRender = function(callback) {
+    this.afterRenderCallback = callback;
 };
 
 
@@ -94,26 +99,18 @@ AtomReactContext.prototype.setMountComponent = function(mountComponent) {
 };
 
 
-AtomReactContext.prototype.beforeTransactionCommit = function(transactionHasChanges) {
-    if ( transactionHasChanges ) {
+AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousState) {
+    var shouldRender = (newState !== previousState);
+    if ( shouldRender ) {
+        if ( this.beforeRenderCallback ) this.beforeRenderCallback(this.atom.get());
         this.printReactPerfMesuresAround(
             this.renderCurrentAtomState.bind(this)
         );
-    } else {
-        // console.debug("Will not render because atom state has not changed");
     }
 };
-AtomReactContext.prototype.afterTransactionCommit = function(transactionHasChanges) {
-    this.handleRoutingChange();
-    //console.debug("Succesful app rendering. Atom transaction commited with state:",this.atom.get());
-};
-
-AtomReactContext.prototype.handleRoutingChange = function() {
-    var routingState = this.atom.get().routing;
-    if ( routingState !== this.lastRoutingState && this.onRoutingChangeCallback ) {
-        this.onRoutingChangeCallback(routingState,this.lastRoutingState);
-        this.lastRoutingState = routingState;
-    }
+AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState) {
+    var shouldRender = (newState !== previousState);
+    if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
 
 AtomReactContext.prototype.publishEvent = function(event) {

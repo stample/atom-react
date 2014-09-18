@@ -54,10 +54,6 @@ Atom.prototype.rollbackTransaction = function() {
     this.currentTransactionState = undefined
 };
 
-Atom.prototype.transactionHasChanges = function() {
-    return (this.state !== this.currentTransactionState)
-};
-
 
 Atom.prototype.transact = function(tasks) {
     // TODO do we need to implement more complex transaction propagation rules than joining the existing transaction?
@@ -68,18 +64,22 @@ Atom.prototype.transact = function(tasks) {
         this.openTransaction();
         try {
             tasks();
-            var transactionHasChanges = this.transactionHasChanges();
-            // TODO forbid atom modifications in this callback
-            this.beforeTransactionCommit(transactionHasChanges);
+            // "lock" these values before calling the callbacks
+            var previousState = this.state;
+            var newState = this.currentTransactionState;
+            this.beforeTransactionCommit(newState,previousState);
+            if ( this.currentTransactionState !== newState ) {
+                throw new Error("You can't modify the atom state in 'beforeTransactionCommit' callback");
+            }
             this.commitTransaction();
             try {
-                this.afterTransactionCommit(transactionHasChanges);
-            } catch (error) {
-                console.error("The 'afterTransactionCommit' callback could not be executed. " +
-                    "Note that it won't produce a transaction rollback",error.message,error.stack);
+                this.afterTransactionCommit(newState,previousState);
+            } catch(error) {
+                console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited",error.message);
+                console.error(error.stack);
             }
         } catch (error) {
-            console.error("Error during atom transaction!",error.message,this);
+            console.error("Error during atom transaction! Atom state will be rollbacked",error.message);
             console.error(error.stack);
             this.rollbackTransaction();
         }
