@@ -45,11 +45,18 @@ AtomCursor.prototype.getOrElse = function(fallback) {
 };
 
 
+// Will return false if the set/unset operation did not change anything
 AtomCursor.prototype.set = function(value) {
+    var stateBefore = this.atom.get();
     this.atom.setPathValue(this.atomPath,value);
+    var stateAfter = this.atom.get();
+    return (stateBefore !== stateAfter);
 };
 AtomCursor.prototype.unset = function() {
+    var stateBefore = this.atom.get();
     this.atom.unsetPathValue(this.atomPath);
+    var stateAfter = this.atom.get();
+    return (stateBefore !== stateAfter);
 };
 
 
