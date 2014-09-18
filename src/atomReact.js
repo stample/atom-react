@@ -13,44 +13,55 @@ var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 
 
 
-function isSameValueOrCursor(value,nextValue) {
-    if ( value instanceof AtomCursor && nextValue instanceof AtomCursor ) {
-        return value.originalValue === nextValue.originalValue;
-    } else {
-        return value === nextValue;
-    }
-}
-
 function shallowEqualProps(props, nextProps) {
     if (props === nextProps) {
         return true;
     }
-    if ( props.length !== nextProps.length ) {
+
+    if ( Object.keys(props).length !== Object.keys(nextProps).length ) {
         return false;
     }
 
     var key;
     for (key in props) {
-        var equalValues = isSameValueOrCursor(props[key],nextProps[key]);
-        if ( !equalValues ) {
-            return false;
-        }
+        if ( props[key] !== nextProps[key] ) return false;
     }
     return true;
 }
 
+function dereferenceCursors(props) {
+    var dereferenced = {};
+    Object.keys(props).forEach(function(key) {
+        if ( props[key] instanceof AtomCursor ) {
+            dereferenced[key] = props[key].value();
+        } else {
+            dereferenced[key] = props[key];
+        }
+    });
+    return dereferenced;
+}
 
 
 var WithPureRenderMixin = {
     shouldComponentUpdate: function(nextProps, nextState) {
-        if ( nextState ) {
-            throw new Error("AtomReact components should not have any local state! " + this.getDisplayName());
+        try {
+            var dereferencedProps = dereferenceCursors(nextProps);
+            if ( !this.previouslyRenderedDereferencedProps ) {
+                this.previouslyRenderedDereferencedProps = dereferencedProps;
+                return true;
+            }
+            var shouldUpdate = !shallowEqualProps(dereferencedProps,this.previouslyRenderedDereferencedProps);
+            if ( shouldUpdate ) {
+                //console.debug("["+this.getDisplayName()+"] should update!");
+                this.previouslyRenderedDereferencedProps = dereferencedProps;
+            } else {
+                //console.debug("["+this.getDisplayName()+"] should not update!")
+            }
+            return shouldUpdate;
+        } catch (e) {
+            console.error("Error in 'shouldComponentUpdate' for component ",this.getDisplayName(), e.message, e.stack);
+            return true;
         }
-        var shouldUpdate = !shallowEqualProps(this.props, nextProps);
-        if ( shouldUpdate ) {
-            //console.debug("["+this.getDisplayName()+"] should update!")
-        }
-        return shouldUpdate;
     }
 };
 exports.WithPureRenderMixin = WithPureRenderMixin;

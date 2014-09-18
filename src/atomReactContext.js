@@ -224,8 +224,6 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var props = {
         appStateCursor: this.atom.cursor()
     };
-
-    this.router.routerManager.prepare();
     var context = {
         atom: this.atom,
         publishEvent: this.publishEvent.bind(this),

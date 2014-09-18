@@ -11,10 +11,6 @@ var AtomAsyncUtils = require("./atomAsyncUtils");
 var AtomCursor = function AtomCursor(atom,atomPath) {
     this.atom = atom;
     this.atomPath = atomPath;
-
-    // This is needed to be able to compare cursors in should component update
-    // TODO maybe there's a better way?
-    this.originalValue = this.atom.getPathValue(this.atomPath);
 };
 
 

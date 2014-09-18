@@ -24,7 +24,7 @@ exports.AtomReactStore = AtomReactStore;
 
 
 
-// The router is just a very specific store
+// TODO remove this router stuff!
 var AtomReactRouter = function AtomReactRouter(description) {
     Preconditions.checkHasValue(description);
     this.description = description;
@@ -45,44 +45,21 @@ var AtomReactStoreManager = function AtomReactStoreManager(atom,path,store) {
     this.atom = atom;
     this.path = path;
     this.store = store;
+    // TODO probably not very elegant
+    this.store.description.cursor = this.atom.cursor().follow(this.path);
+
+    // TODO remove deprecated name!
+    this.store.description.storeCursor = this.atom.cursor().follow(this.path);
 };
-
-
-AtomReactStoreManager.prototype.storeCursor = function() {
-    return this.atom.cursor().follow(this.path);
-};
-
-
-AtomReactStoreManager.prototype.isRouter = function() {
-    return this.path.length === 1 && this.path[0] === "routing";
-};
-
-
-// TODO probably not very elegant and secure code, could be overrided
-AtomReactStoreManager.prototype.prepare = function() {
-    var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
-    this.store.description[cursorAttributeName] = this.storeCursor();
-};
-
 
 // TODO this should be removed in favor of bootstrap event
 AtomReactStoreManager.prototype.init = function() {
-    var cursorAttributeName = this.isRouter() ? "routingCursor" : "storeCursor";
-    this.prepare();
-    this.store.description[cursorAttributeName] = this.storeCursor();
     if ( this.store.description.init ) {
         this.store.description.init();
-    } else {
-        this.storeCursor().set({});
     }
 };
 
-
-
 AtomReactStoreManager.prototype.handleEvent = function(event) {
-    if ( this.store.description.handleEvent ) {
-        this.prepare();
-        this.store.description.handleEvent(event);
-    }
+    this.store.description.handleEvent(event);
 };
 exports.AtomReactStoreManager = AtomReactStoreManager;
