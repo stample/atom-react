@@ -103,6 +103,17 @@ var WithEventPublisherMixin = {
 };
 exports.WithEventPublisherMixin = WithEventPublisherMixin;
 
+var WithCommandPublisherMixin = {
+    contextTypes: {
+        publishCommand: React.PropTypes.func.isRequired
+    },
+    publishCommand: function(command) {
+        Preconditions.checkCondition(command instanceof AtomReactCommand,"Command fired is not an AtomReactCommand! " + command);
+        this.context.publishCommand(command);
+    }
+};
+exports.WithCommandPublisherMixin = WithCommandPublisherMixin;
+
 
 var WithEventListenerMixin = {
     contextTypes: {
@@ -134,6 +145,7 @@ function addMixins(config) {
     config.mixins.push(WithPureRenderMixin);
     config.mixins.push(WithCursorLinkingMixin);
     config.mixins.push(WithTransactMixin);
+    config.mixins.push(WithCommandPublisherMixin);
     config.mixins.push(WithEventPublisherMixin);
     config.mixins.push(WithEventListenerMixin);
 }
@@ -198,3 +210,12 @@ var AtomReactEvent = function(eventName,eventData) {
     this.timestamp = new Date().getTime();
 };
 exports.Event = AtomReactEvent;
+
+
+var AtomReactCommand = function(commandName,commandData) {
+    Preconditions.checkHasValue(commandName,"Command name is mandatory");
+    this.name = commandName;
+    this.data = commandData;
+    this.timestamp = new Date().getTime();
+};
+exports.Command = AtomReactCommand;

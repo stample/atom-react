@@ -20,6 +20,7 @@ var AtomReactContext = function AtomReactContext() {
     this.beforeRenderCallback = undefined;
     this.beforeRenderCallback = undefined;
     this.logPublishedEvents = false;
+    this.logPublishedCommands = false;
 
     this.atom = new Atom({
         beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
@@ -33,6 +34,7 @@ AtomReactContext.prototype.debugMode = function() {
     this.setPerfMesureMode("wasted");
     this.setVerboseStateChangeLog(true);
     this.setLogPublishedEvents(true);
+    this.setLogPublishedCommands(true);
 };
 
 AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
@@ -44,6 +46,9 @@ AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
 };
 AtomReactContext.prototype.setLogPublishedEvents = function(bool) {
     this.logPublishedEvents = bool;
+};
+AtomReactContext.prototype.setLogPublishedCommands = function(bool) {
+    this.logPublishedCommands = bool;
 };
 
 
@@ -72,7 +77,6 @@ AtomReactContext.prototype.setRouter = function(router) {
 AtomReactContext.prototype.addEventListener = function(listener) {
     this.eventListeners.push(listener);
 };
-
 AtomReactContext.prototype.removeEventListener = function(listener) {
     var index = this.eventListeners.indexOf(listener);
     if (index > -1) {
@@ -112,6 +116,39 @@ AtomReactContext.prototype.afterTransactionCommit = function(newState,previousSt
     var shouldRender = (newState !== previousState);
     if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
+
+AtomReactContext.prototype.publishCommand = function(command) {
+    if ( this.logPublishedCommands ) {
+        console.debug("Publishing command:",command);
+    }
+    var self = this;
+    // All commands are treated inside a transaction
+    // TODO lock atom while the command is published: commands should simply return events
+    this.atom.transact(function() {
+        self.stores.forEach(function(store) {
+            // TODO maybe allow to return multiple events
+            // TODO forbid multiple command handlers to handle the same command
+            try {
+                // TODO maybe stores should be regular command handlers?
+                var event = store.storeManager.handleCommand(command);
+                console.debug("Returned event: ",event);
+                // TODO check event is an AtomReactEvent!
+                if ( event ) {
+                    self.publishEvent(event)
+                };
+                return;
+            } catch (error) {
+                var errorMessage = "Store ["+store.store.name+"] could not handle command";
+                console.error(errorMessage,command);
+                console.error(error.stack);
+                throw new Error(errorMessage);
+            }
+        });
+    });
+    // All commands must be handled: fail fast TODO !!!
+    // throw new Error("No command handler could be executed for command: "+ command.name);
+};
+
 
 AtomReactContext.prototype.publishEvent = function(event) {
     if ( this.logPublishedEvents ) {
@@ -227,6 +264,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var context = {
         atom: this.atom,
         publishEvent: this.publishEvent.bind(this),
+        publishCommand: this.publishCommand.bind(this),
         addEventListener: this.addEventListener.bind(this),
         removeEventListener: this.addEventListener.bind(this)
     };

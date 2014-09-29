@@ -62,4 +62,9 @@ AtomReactStoreManager.prototype.init = function() {
 AtomReactStoreManager.prototype.handleEvent = function(event) {
     this.store.description.handleEvent(event);
 };
+AtomReactStoreManager.prototype.handleCommand = function(command) {
+    if ( this.store.description.handleCommand ) {
+        return this.store.description.handleCommand(command);
+    }
+};
 exports.AtomReactStoreManager = AtomReactStoreManager;
