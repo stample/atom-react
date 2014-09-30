@@ -120,7 +120,7 @@ AtomReactContext.prototype.afterTransactionCommit = function(newState,previousSt
 
 AtomReactContext.prototype.publishCommand = function(command) {
     if ( this.logPublishedCommands ) {
-        console.debug("Publishing command:",command);
+        console.debug("Publishing command: %c"+command.name,"color: red;",command.data);
     }
     Preconditions.checkCondition(command instanceof AtomReactCommand,"Command fired is not an AtomReactCommand! " + command);
     var self = this;
@@ -153,17 +153,17 @@ AtomReactContext.prototype.publishCommand = function(command) {
     if ( !commandHandlerByStore ) {
         throw new Error("Commands should be handled by exactly one command handler");
     }
-    this.transact(function() {
+    this.atom.transact(function() {
         returnedEvents.forEach(function(event) {
             self.publishEvent(event);
         })
-    }.bind(this));
+    });
 };
 
 
 AtomReactContext.prototype.publishEvent = function(event) {
     if ( this.logPublishedEvents ) {
-        console.debug("Publishing event:",event);
+        console.debug("Publishing event: %c"+event.name,"color: green;",event.data);
     }
     Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
     var self = this;

@@ -51,10 +51,9 @@ exports.AtomAsyncValue = AtomAsyncValue;
 
 
 
-// This returns a promise of the data, but only if the
+// This returns a promise of the swapped result if the swap was successful
 function setupAsyncValueSwapping(atom,path,asyncValue,promise,logCompletion) {
     var deferred = Q.defer();
-
     Q(promise)
         .then(function asyncCompletionSuccess(data) {
             var swapped = atom.compareAndSwapPathValue(path,asyncValue,asyncValue.toSuccess(data));
