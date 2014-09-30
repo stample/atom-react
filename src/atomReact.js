@@ -11,7 +11,8 @@ var AtomReactStore = require("./atomReactStore");
 var AtomCursor = require("./atom/atomCursor");
 var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 
-
+var AtomReactEvent = require("./atomReactEvent");
+var AtomReactCommand = require("./atomReactCommand");
 
 function shallowEqualProps(props, nextProps) {
     if (props === nextProps) {
@@ -97,7 +98,6 @@ var WithEventPublisherMixin = {
         publishEvent: React.PropTypes.func.isRequired
     },
     publish: function(event) {
-        Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
         this.context.publishEvent(event);
     }
 };
@@ -108,7 +108,6 @@ var WithCommandPublisherMixin = {
         publishCommand: React.PropTypes.func.isRequired
     },
     publishCommand: function(command) {
-        Preconditions.checkCondition(command instanceof AtomReactCommand,"Command fired is not an AtomReactCommand! " + command);
         this.context.publishCommand(command);
     }
 };
@@ -203,19 +202,6 @@ exports.DeepFreeze = DeepFreeze
 
 
 
-var AtomReactEvent = function(eventName,eventData) {
-    Preconditions.checkHasValue(eventName,"Event name is mandatory");
-    this.name = eventName;
-    this.data = eventData;
-    this.timestamp = new Date().getTime();
-};
+
 exports.Event = AtomReactEvent;
-
-
-var AtomReactCommand = function(commandName,commandData) {
-    Preconditions.checkHasValue(commandName,"Command name is mandatory");
-    this.name = commandName;
-    this.data = commandData;
-    this.timestamp = new Date().getTime();
-};
 exports.Command = AtomReactCommand;

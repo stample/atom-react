@@ -7,7 +7,8 @@ var Atom = require("./atom/atom");
 var AtomCursor = require("./atom/atomCursor");
 var AtomUtils = require("./atom/atomUtils");
 
-
+var AtomReactEvent = require("./atomReactEvent");
+var AtomReactCommand = require("./atomReactCommand");
 
 var AtomReactContext = function AtomReactContext() {
     this.stores = [];
@@ -121,22 +122,26 @@ AtomReactContext.prototype.publishCommand = function(command) {
     if ( this.logPublishedCommands ) {
         console.debug("Publishing command:",command);
     }
+    Preconditions.checkCondition(command instanceof AtomReactCommand,"Command fired is not an AtomReactCommand! " + command);
     var self = this;
-    // All commands are treated inside a transaction
-    // TODO lock atom while the command is published: commands should simply return events
-    this.atom.transact(function() {
+    var commandHandlerByStore = undefined;
+    var returnedEvents = undefined;
+    this.atom.doWithLock("A command handler should not modify the atom state!",function() {
         self.stores.forEach(function(store) {
-            // TODO maybe allow to return multiple events
-            // TODO forbid multiple command handlers to handle the same command
             try {
-                // TODO maybe stores should be regular command handlers?
-                var event = store.storeManager.handleCommand(command);
-                console.debug("Returned event: ",event);
-                // TODO check event is an AtomReactEvent!
-                if ( event ) {
-                    self.publishEvent(event)
-                };
-                return;
+                var eventOrEvents = store.storeManager.handleCommand(command);
+                if ( eventOrEvents ) {
+                    if ( commandHandlerByStore ) {
+                        throw new Error("Command can't be handled by store " + store.store.name +
+                            " because it was already handled by " + commandHandlerByStore.store.name);
+                    }
+                    commandHandlerByStore = store;
+                    if ( eventOrEvents instanceof Array ) {
+                        returnedEvents = eventOrEvents;
+                    } else {
+                        returnedEvents = [eventOrEvents];
+                    }
+                }
             } catch (error) {
                 var errorMessage = "Store ["+store.store.name+"] could not handle command";
                 console.error(errorMessage,command);
@@ -145,8 +150,14 @@ AtomReactContext.prototype.publishCommand = function(command) {
             }
         });
     });
-    // All commands must be handled: fail fast TODO !!!
-    // throw new Error("No command handler could be executed for command: "+ command.name);
+    if ( !commandHandlerByStore ) {
+        throw new Error("Commands should be handled by exactly one command handler");
+    }
+    this.transact(function() {
+        returnedEvents.forEach(function(event) {
+            self.publishEvent(event);
+        })
+    }.bind(this));
 };
 
 
@@ -154,6 +165,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
     if ( this.logPublishedEvents ) {
         console.debug("Publishing event:",event);
     }
+    Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
     var self = this;
     // All events are treated inside a transaction
     this.atom.transact(function() {
@@ -271,11 +283,13 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     try {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
-        React.withContext(context,function() {
-            React.renderComponent(
-                self.mountComponent(props),
-                self.mountNode
-            );
+        this.atom.doWithLock("Atom state should not be modified during the render phase",function() {
+            React.withContext(context,function() {
+                React.renderComponent(
+                    self.mountComponent(props),
+                    self.mountNode
+                );
+            });
         });
         console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
     } catch (error) {

@@ -2,7 +2,6 @@
 
 var React = require("react/addons");
 var DeepFreeze = require("../utils/deepFreeze");
-var Preconditions = require("../utils/preconditions");
 
 
 var AtomUtils = require("./atomUtils");
@@ -34,6 +33,9 @@ Atom.prototype.swap = function(newState) {
     if ( !this.isInTransaction() ) {
         throw new Error("It is forbidden to swap the atom outside of a transaction");
     }
+    if ( this.locked ) {
+        throw new Error("Atom is locked because: "+this.lockReason);
+    }
     DeepFreeze(newState);
     this.currentTransactionState = newState;
 };
@@ -55,6 +57,27 @@ Atom.prototype.rollbackTransaction = function() {
 };
 
 
+
+Atom.prototype.lock = function(lockReason) {
+    this.locked = true;
+    this.lockReason = lockReason
+};
+Atom.prototype.unlock = function() {
+    this.locked = false;
+    this.lockReason = undefined
+};
+
+Atom.prototype.doWithLock = function(lockReason,task) {
+    try {
+        this.lock(lockReason);
+        task();
+    } finally {
+        this.unlock();
+    }
+};
+
+
+
 Atom.prototype.transact = function(tasks) {
     // TODO do we need to implement more complex transaction propagation rules than joining the existing transaction?
     if ( this.isInTransaction() ) {
@@ -66,14 +89,10 @@ Atom.prototype.transact = function(tasks) {
             tasks();
             // "lock" these values before calling the callbacks
             var previousState = this.state;
-            var newState = this.currentTransactionState;
-            this.beforeTransactionCommit(newState,previousState);
-            if ( this.currentTransactionState !== newState ) {
-                throw new Error("You can't modify the atom state in 'beforeTransactionCommit' callback");
-            }
+            this.beforeTransactionCommit(this.currentTransactionState,previousState);
             this.commitTransaction();
             try {
-                this.afterTransactionCommit(newState,previousState);
+                this.afterTransactionCommit(this.state,previousState);
             } catch(error) {
                 console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited",error.message);
                 console.error(error.stack);
