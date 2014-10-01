@@ -290,6 +290,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     var context = {
         atom: this.atom,
         publishEvent: this.publishEvent.bind(this),
+        publishEvents: this.publishEvents.bind(this),
         publishCommand: this.publishCommand.bind(this),
         addEventListener: this.addEventListener.bind(this),
         removeEventListener: this.addEventListener.bind(this)
