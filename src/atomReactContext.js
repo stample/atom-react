@@ -153,8 +153,20 @@ AtomReactContext.prototype.publishCommand = function(command) {
     if ( !commandHandlerByStore ) {
         throw new Error("Commands should be handled by exactly one command handler");
     }
-    this.atom.transact(function() {
-        returnedEvents.forEach(function(event) {
+    this.publishEvents(returnedEvents);
+};
+
+// Publish multiple events in the same transaction. Publishing order remains
+AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
+    var eventArray = undefined;
+    if ( arrayOrArguments instanceof Array ) {
+        eventArray = arrayOrArguments;
+    } else {
+        eventArray = Array.prototype.slice.call(arguments, 0);
+    }
+    var self = this;
+    this.transact(function() {
+        eventArray.forEach(function(event) {
             self.publishEvent(event);
         })
     });
@@ -168,7 +180,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
     Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
     var self = this;
     // All events are treated inside a transaction
-    this.atom.transact(function() {
+    this.transact(function() {
         try {
             // TODO maybe stores should be regular event listeners?
             self.router.routerManager.handleEvent(event);
@@ -235,13 +247,15 @@ AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
     console.debug("Starting AtomReactContext",this);
 
     var self = this;
-    this.atom.transact(function() {
+    this.transact(function() {
         self.initStores(); // TODO should be removed. Stores should be initialized with a bootstrap event only
         self.publishEvent(bootstrapEvent);
     });
 };
 
-
+AtomReactContext.prototype.transact = function(task) {
+    this.atom.transact(task);
+};
 
 
 AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
