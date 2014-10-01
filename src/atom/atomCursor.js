@@ -3,6 +3,7 @@
 var _ = require("lodash");
 
 var Preconditions = require("../utils/preconditions");
+var ArgumentsOrArray = require("../utils/argumentsOrArray");
 
 var AtomUtils = require("./atomUtils");
 var AtomAsyncUtils = require("./atomAsyncUtils");
@@ -90,7 +91,7 @@ AtomCursor.prototype.minus = function(number) {
 };
 
 AtomCursor.prototype.follow = function() {
-    var pathToFollow = AtomUtils.convenientArgumentsToArray(arguments);
+    var pathToFollow = ArgumentsOrArray(arguments);
     var newPath = this.atomPath.concat(pathToFollow);
     return new AtomCursor(this.atom,newPath);
 };

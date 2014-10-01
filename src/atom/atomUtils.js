@@ -7,6 +7,7 @@ var _ = require("lodash");
 var Preconditions = require("../utils/preconditions");
 
 
+
 /**
  * Transforms (["a","b","c"],objectAtPath) into {a: {b: {c: objectAtPath } } }
  * @param path
@@ -152,14 +153,3 @@ function getPathDiff(state1,state2) {
 }
 exports.getPathDiff = getPathDiff;
 
-
-
-// this allows both syntax styles for passing path: follow("x","y") or follow(["x","y"])
-function convenientArgumentsToArray(methodArguments) {
-    if ( methodArguments.length == 1 && methodArguments[0] instanceof Array ) {
-        return methodArguments[0];
-    } else {
-        return Array.prototype.slice.call(methodArguments, 0);
-    }
-}
-exports.convenientArgumentsToArray = convenientArgumentsToArray;

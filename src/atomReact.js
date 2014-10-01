@@ -4,6 +4,7 @@ var React = require("react/addons");
 var ReactLink = require("react/lib/ReactLink");
 var Preconditions = require("./utils/preconditions");
 var DeepFreeze = require("./utils/deepFreeze");
+var ArgumentsOrArray = require("./utils/argumentsOrArray");
 
 var Atom = require("./atom/atom");
 var AtomReactContext = require("./atomReactContext");
@@ -97,8 +98,9 @@ var WithEventPublisherMixin = {
     contextTypes: {
         publishEvents: React.PropTypes.func.isRequired
     },
-    publish: function(eventOrEvents) {
-        this.context.publishEvents(eventOrEvents);
+    publish: function() {
+        var array = ArgumentsOrArray(arguments);
+        this.context.publishEvents(array);
     }
 };
 exports.WithEventPublisherMixin = WithEventPublisherMixin;
