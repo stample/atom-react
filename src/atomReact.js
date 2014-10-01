@@ -95,7 +95,7 @@ exports.WithTransactMixin = WithTransactMixin;
 
 var WithEventPublisherMixin = {
     contextTypes: {
-        publishEvent: React.PropTypes.func.isRequired
+        publishEvents: React.PropTypes.func.isRequired
     },
     publish: function(eventOrEvents) {
         this.context.publishEvents(eventOrEvents);
