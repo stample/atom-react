@@ -75,7 +75,12 @@ AtomCursor.prototype.without = function(value) {
     var newList = _.without(list,value);
     this.atom.setPathValue(this.atomPath,newList);
 };
-
+AtomCursor.prototype.filter = function(value) {
+    var list = this.value();
+    ensureIsArray(list,"can only call filter on an array. "+this.atomPath);
+    var newList = _.filter(list,value);
+    this.atom.setPathValue(this.atomPath,newList);
+};
 
 AtomCursor.prototype.update = function(updateFunction) {
     var value = this.value();
