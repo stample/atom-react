@@ -49,7 +49,7 @@ var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     this.store.description.cursor = this.context.atom.cursor().follow(this.path);
 
     // TODO this is a temporary hack that should be removed when we know how to handle CQRS Sagas better
-    this.store.description.temporaryHack_publishEvents = this.context.publishEvents;
+    this.store.description.temporaryHack_publishEvents = this.context.publishEvents.bind(this.context);
 
     // TODO remove deprecated name!
     this.store.description.storeCursor = this.context.atom.cursor().follow(this.path);
