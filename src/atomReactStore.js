@@ -14,8 +14,8 @@ var AtomReactStore = function AtomReactStore(name,description) {
     this.name = name;
     this.description = description;
 };
-AtomReactStore.prototype.createStoreManager = function(atom) {
-    return new AtomReactStoreManager(atom,["stores",this.name],this);
+AtomReactStore.prototype.createStoreManager = function(context) {
+    return new AtomReactStoreManager(context,["stores",this.name],this);
 };
 exports.AtomReactStore = AtomReactStore;
 
@@ -29,8 +29,8 @@ var AtomReactRouter = function AtomReactRouter(description) {
     Preconditions.checkHasValue(description);
     this.description = description;
 };
-AtomReactRouter.prototype.createStoreManager = function(atom) {
-    return new AtomReactStoreManager(atom,["routing"],this);
+AtomReactRouter.prototype.createStoreManager = function(context) {
+    return new AtomReactStoreManager(context,["routing"],this);
 };
 exports.AtomReactRouter = AtomReactRouter;
 
@@ -39,17 +39,20 @@ exports.AtomReactRouter = AtomReactRouter;
 
 
 
-var AtomReactStoreManager = function AtomReactStoreManager(atom,path,store) {
-    Preconditions.checkHasValue(atom);
+var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
+    Preconditions.checkHasValue(context);
     Preconditions.checkHasValue(store);
-    this.atom = atom;
+    this.context = context;
     this.path = path;
     this.store = store;
     // TODO probably not very elegant
-    this.store.description.cursor = this.atom.cursor().follow(this.path);
+    this.store.description.cursor = this.context.atom.cursor().follow(this.path);
+
+    // TODO this is a temporary hack that should be removed when we know how to handle CQRS Sagas better
+    this.store.description.temporaryHack_publishEvents = this.context.publishEvents;
 
     // TODO remove deprecated name!
-    this.store.description.storeCursor = this.atom.cursor().follow(this.path);
+    this.store.description.storeCursor = this.context.atom.cursor().follow(this.path);
 };
 
 // TODO this should be removed in favor of bootstrap event

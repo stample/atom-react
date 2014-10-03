@@ -63,14 +63,14 @@ AtomReactContext.prototype.addStore = function(store) {
     }
     this.stores.push({
         store: store,
-        storeManager: store.createStoreManager(this.atom)
+        storeManager: store.createStoreManager(this)
     });
 };
 
 AtomReactContext.prototype.setRouter = function(router) {
     this.router = {
         router: router,
-        routerManager: router.createStoreManager(this.atom)
+        routerManager: router.createStoreManager(this)
     };
 };
 
