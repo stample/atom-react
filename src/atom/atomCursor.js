@@ -82,8 +82,8 @@ AtomCursor.prototype.filter = function(value) {
     this.atom.setPathValue(this.atomPath,newList);
 };
 
-AtomCursor.prototype.update = function(updateFunction) {
-    var value = this.value();
+AtomCursor.prototype.update = function(updateFunction,initialValueFallback) {
+    var value = this.value() || initialValueFallback;
     if ( !Preconditions.hasValue(value) ) throw new Error("you can't update an unexisting value. " + this.atomPath);
     var valueToSet = updateFunction(value);
     this.atom.setPathValue(this.atomPath,valueToSet);
@@ -93,6 +93,9 @@ AtomCursor.prototype.plus = function(number) {
 };
 AtomCursor.prototype.minus = function(number) {
     this.update(function(value) { return value-number });
+};
+AtomCursor.prototype.toggle = function(initialValueFallback) {
+    this.update(function(value) { return !value },!!initialValueFallback);
 };
 
 AtomCursor.prototype.follow = function() {
