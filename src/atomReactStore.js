@@ -47,6 +47,7 @@ var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     this.store = store;
     // TODO probably not very elegant
     this.store.description.cursor = this.context.atom.cursor().follow(this.path);
+    this.store.description.transact = this.atom.transact.bind(this.atom);
 
     // TODO this is a temporary hack that should be removed when we know how to handle CQRS Sagas better
     this.store.description.temporaryHack_publishEvents = this.context.publishEvents.bind(this.context);
