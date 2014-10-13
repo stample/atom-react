@@ -21,6 +21,10 @@ function ensureIsArray(maybeArray,message) {
     }
 }
 
+AtomCursor.prototype.transact = function(tasks) {
+    this.atom.transact(tasks);
+};
+
 AtomCursor.prototype.value = function() {
     return this.atom.getPathValue(this.atomPath);
 };
