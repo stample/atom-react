@@ -73,7 +73,10 @@ exports.WithPureRenderMixin = WithPureRenderMixin;
 var WithCursorLinkingMixin = {
     linkCursor: function(cursor) {
         return new ReactLink(
-            cursor.getOrElse(undefined),
+            //cursor.getOrElse(undefined),
+            // TODO not sure we should fallback to "", but in some cases with ReactLink value=undefined, the inputs do not empty themselves
+            // Note that I could not reproduce this in a sandbox :s see http://jsfiddle.net/kb3gN/6431/
+            cursor.getOrElse(""),
             function setCursorNewValue(value) {
                 cursor.set(value);
             }
