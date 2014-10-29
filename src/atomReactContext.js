@@ -11,6 +11,7 @@ var AtomReactEvent = require("./atomReactEvent");
 var AtomReactCommand = require("./atomReactCommand");
 
 var AtomReactContext = function AtomReactContext() {
+    this.recorder = new AtomReactRecorder(this);
     this.stores = [];
     this.eventListeners = [];
     this.router = undefined;
@@ -111,6 +112,9 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
         this.printReactPerfMesuresAround(
             this.renderCurrentAtomState.bind(this)
         );
+        if ( this.recorder.isRecording() ) {
+            this.recorder.addRecord(newState);
+        }
     }
 };
 AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState) {
@@ -282,13 +286,20 @@ AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
 };
 
 
+
+
 AtomReactContext.prototype.renderCurrentAtomState = function() {
+    this.renderAtomState(this.atom);
+};
+
+AtomReactContext.prototype.renderAtomState = function(atomToRender) {
     var self = this;
     var props = {
-        appStateCursor: this.atom.cursor()
+        appStateCursor: atomToRender.cursor()
     };
+    // TODO pass the AtomReact context directly to react !
     var context = {
-        atom: this.atom,
+        atom: atomToRender,
         publishEvent: this.publishEvent.bind(this),
         publishEvents: this.publishEvents.bind(this),
         publishCommand: this.publishCommand.bind(this),
@@ -298,7 +309,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
     try {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
-        this.atom.doWithLock("Atom state should not be modified during the render phase",function() {
+        atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
             React.withContext(context,function() {
                 React.renderComponent(
                     self.mountComponent(props),
@@ -308,7 +319,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
         });
         console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
     } catch (error) {
-        console.error("Could not render application with state\n",this.atom.get());
+        console.error("Could not render application with state\n",atomToRender.get());
         console.error(error.stack);
         throw new Error("Could not render application");
     }
@@ -331,3 +342,71 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
         console.debug("Rendering state",this.atom.get());
     }
 };
+
+
+
+
+
+// TODO it may be fun to record cursor position !!!
+
+// TODO how to prevent the user to interacting during the replay???
+
+var AtomReactRecorder = function AtomReactRecorder(atomReactContext) {
+    Preconditions.checkHasValue(atomReactContext);
+    this.context = atomReactContext;
+    this.recording = false;
+    this.replaying = false;
+    this.stateRecords = undefined;
+};
+
+AtomReactRecorder.prototype.isRecording = function() {
+    return this.recording;
+};
+AtomReactRecorder.prototype.isReplaying = function() {
+    return this.replaying;
+};
+
+AtomReactRecorder.prototype.startRecording = function() {
+    console.debug("Start recording");
+    this.recording = true;
+    this.stateRecords = [];
+};
+AtomReactRecorder.prototype.addRecord = function(state) {
+    Preconditions.checkHasValue(state);
+    Preconditions.checkCondition(this.isRecording());
+    console.debug("Adding record",state);
+    this.stateRecords.push({
+        time: Date.now(),
+        state: state
+    });
+};
+AtomReactRecorder.prototype.stopRecording = function() {
+    this.recording = false;
+};
+
+AtomReactRecorder.prototype.replayStateRecord = function(record) {
+    Preconditions.checkHasValue(record);
+    Preconditions.checkHasValue(record.state);
+    Preconditions.checkCondition(!this.isRecording());
+    // TODO not sure it's nice to create a different atom for each replayed state...
+    var replayStateAtom = new Atom({initialState: record.state});
+    this.context.renderAtomState(replayStateAtom);
+};
+
+AtomReactRecorder.prototype.replay = function() {
+    Preconditions.checkCondition(!this.isRecording());
+    var timeBetweenStates = 1000;
+    this.replaying = true;
+    this.replayInterval = setInterval(function() {
+        if ( !this.stateRecords || this.stateRecords.length === 0 ) {
+            console.debug("End of replay!");
+            clearInterval(this.replayInterval);
+            this.replaying = false;
+        } else {
+            var recordToReplay = this.stateRecords.shift(); // TODO do not use shift! we should be able to replay the records multiple time!
+            this.replayStateRecord(recordToReplay);
+        }
+    }.bind(this),timeBetweenStates);
+};
+
+

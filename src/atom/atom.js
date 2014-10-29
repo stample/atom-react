@@ -17,7 +17,7 @@ var NOOP = function noop() { } // Convenient but probably not performant: TODO ?
  * @constructor
  */
 var Atom = function Atom(options) {
-    this.state = {};
+    this.state = options.initialState || {};
     this.beforeTransactionCommit = options.beforeTransactionCommit || NOOP;
     this.afterTransactionCommit = options.afterTransactionCommit || NOOP;
     this.currentTransactionState = undefined;
