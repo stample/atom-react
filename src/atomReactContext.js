@@ -354,9 +354,11 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
 var AtomReactRecorder = function AtomReactRecorder(atomReactContext) {
     Preconditions.checkHasValue(atomReactContext);
     this.context = atomReactContext;
+
     this.recording = false;
-    this.replaying = false;
     this.stateRecords = undefined;
+
+    this.replaying = false;
 };
 
 AtomReactRecorder.prototype.isRecording = function() {
@@ -370,6 +372,10 @@ AtomReactRecorder.prototype.startRecording = function() {
     console.debug("Start recording");
     this.recording = true;
     this.stateRecords = [];
+
+    // The first item of the record is the current atom state
+    var currentAtomState = this.context.atom.get();
+    this.addRecord(currentAtomState);
 };
 AtomReactRecorder.prototype.addRecord = function(state) {
     Preconditions.checkHasValue(state);
@@ -393,20 +399,64 @@ AtomReactRecorder.prototype.replayStateRecord = function(record) {
     this.context.renderAtomState(replayStateAtom);
 };
 
-AtomReactRecorder.prototype.replay = function() {
+
+
+
+AtomReactRecorder.prototype.replay = function(speedFactor) {
     Preconditions.checkCondition(!this.isRecording());
-    var timeBetweenStates = 1000;
-    this.replaying = true;
-    this.replayInterval = setInterval(function() {
-        if ( !this.stateRecords || this.stateRecords.length === 0 ) {
-            console.debug("End of replay!");
-            clearInterval(this.replayInterval);
-            this.replaying = false;
-        } else {
-            var recordToReplay = this.stateRecords.shift(); // TODO do not use shift! we should be able to replay the records multiple time!
-            this.replayStateRecord(recordToReplay);
-        }
-    }.bind(this),timeBetweenStates);
+    Preconditions.checkCondition(!this.isReplaying());
+
+    if ( !this.stateRecords || this.stateRecords.length < 1 ) {
+        console.error("At least 2 records are needed to replay");
+        return;
+    }
+
+    try {
+        this.replaying = true;
+        var speedFactor = speedFactor || 1;
+        var firstRecord = this.stateRecords[0];
+        var lastRecord = this.stateRecords[this.stateRecords.length - 1];
+        var totalRecordTime = lastRecord.time - firstRecord.time;
+        Preconditions.checkCondition(totalRecordTime >= 0);
+
+        var records = this.stateRecords.map(function(record) {
+            // How much time after the beginning this record was added
+            var startOffset = record.time - firstRecord.time;
+            Preconditions.checkCondition(startOffset >= 0);
+            return {
+                record: record,
+                offset: startOffset
+            }
+        });
+
+        // The current time is actually affected by the speed factor
+        var currentReplayTime = 0;
+        var currentRecordIndex = 0;
+        var tickPace = 10; // TODO which value to choose?
+        var replayInterval = setInterval(function() {
+            this.replayStateRecord(records[currentRecordIndex].record);
+            var hasNextRecord = (records.length > currentRecordIndex + 1);
+            // TODO create replay widget and send events to this widget
+            if ( hasNextRecord ) {
+                var nextRecord = records[currentRecordIndex + 1];
+                var isTimeToPlayNextRecord = nextRecord.offset <= currentReplayTime;
+                if ( isTimeToPlayNextRecord ) {
+                    currentRecordIndex = currentRecordIndex + 1;
+                    console.debug("Playing to next record");
+                }
+                currentReplayTime = currentReplayTime + (tickPace * speedFactor);
+            } else {
+                console.debug("End of replay");
+                clearInterval(replayInterval);
+            }
+        }.bind(this),tickPace);
+    } catch (e) {
+        console.error("Error during replay of state records",this.stateRecords,e);
+        console.error(e.stack);
+    } finally {
+        this.replaying = false;
+    }
+
 };
 
 
