@@ -9,9 +9,13 @@ var AtomUtils = require("./atomUtils");
 var AtomAsyncUtils = require("./atomAsyncUtils");
 
 
+// TODO freeze (not deeply) cursor attributes after creation
 var AtomCursor = function AtomCursor(atom,atomPath) {
     this.atom = atom;
     this.atomPath = atomPath;
+
+    // The value of the cursor when it was created;
+    this.creationTimeValue = this.value();
 };
 
 
@@ -27,6 +31,10 @@ AtomCursor.prototype.transact = function(tasks) {
 
 AtomCursor.prototype.value = function() {
     return this.atom.getPathValue(this.atomPath);
+};
+
+AtomCursor.prototype.getCreationTimeValue = function() {
+    return this.creationTimeValue;
 };
 
 AtomCursor.prototype.exists = function() {

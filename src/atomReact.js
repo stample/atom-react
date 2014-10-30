@@ -44,6 +44,8 @@ function dereferenceCursors(props) {
 }
 
 
+
+// TODO switch back to use of cursor.getCreationTimeValue(), because atom can't change during render phases it is safe
 var WithPureRenderMixin = {
     shouldComponentUpdate: function(nextProps, nextState) {
         try {
