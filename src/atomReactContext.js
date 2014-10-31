@@ -311,7 +311,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
         var timeBeforeRendering = Date.now();
         atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
             React.withContext(context,function() {
-                React.renderComponent(
+                React.render(
                     self.mountComponent(props),
                     self.mountNode
                 );
