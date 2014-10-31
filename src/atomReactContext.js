@@ -15,8 +15,6 @@ var AtomReactContext = function AtomReactContext() {
     this.stores = [];
     this.eventListeners = [];
     this.router = undefined;
-    this.mountNode = undefined;
-    this.mountComponent = undefined;
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
     this.beforeRenderCallback = undefined;
@@ -95,13 +93,15 @@ AtomReactContext.prototype.afterRender = function(callback) {
     this.afterRenderCallback = callback;
 };
 
-
-AtomReactContext.prototype.setMountNode = function(mountNode) {
-    this.mountNode = mountNode;
-};
-
-AtomReactContext.prototype.setMountComponent = function(mountComponent) {
-    this.mountComponent = mountComponent;
+// TODO maybe accept both classes and factories in this method?
+AtomReactContext.prototype.setMountConfig = function(reactClass,domNode) {
+    Preconditions.checkHasValue(reactClass,"reactClass is mandatory");
+    Preconditions.checkHasValue(domNode,"domNode is mandatory");
+    this.mountConfig = {
+        reactElementClass: reactClass,
+        reactElementFactory: React.createFactory(reactClass),
+        domNode: domNode
+    };
 };
 
 
@@ -219,42 +219,13 @@ AtomReactContext.prototype.publishEvent = function(event) {
     })
 };
 
-// TODO this should be removed in favor of a bootstrap event
-AtomReactContext.prototype.initStores = function() {
-    try {
-        this.router.routerManager.init();
-    } catch (error) {
-        var errorMessage = "Router could not be initialized";
-        console.error(errorMessage)
-        console.error(error.stack);
-        throw new Error(errorMessage);
-    }
-    this.stores.forEach(function(store) {
-        try {
-            store.storeManager.init();
-        } catch (error) {
-            var errorMessage = "Store ["+store.store.name+"] could not be initialized";
-            console.error(errorMessage)
-            console.error(error.stack);
-            throw new Error(errorMessage);
-        }
-    });
-};
-
-
 
 AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
-    Preconditions.checkHasValue(this.mountComponent,"Mount component is mandatory");
-    Preconditions.checkHasValue(this.mountNode,"Mount node is mandatory");
+    Preconditions.checkHasValue(this.mountConfig,"Mount config is mandatory");
     Preconditions.checkHasValue(this.stores,"Stores array is mandatory");
     Preconditions.checkHasValue(this.router,"router is mandatory");
     console.debug("Starting AtomReactContext",this);
-
-    var self = this;
-    this.transact(function() {
-        self.initStores(); // TODO should be removed. Stores should be initialized with a bootstrap event only
-        self.publishEvent(bootstrapEvent);
-    });
+    this.publishEvent(bootstrapEvent);
 };
 
 AtomReactContext.prototype.transact = function(task) {
@@ -312,8 +283,8 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
         atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
             React.withContext(context,function() {
                 React.render(
-                    self.mountComponent(props),
-                    self.mountNode
+                    self.mountConfig.reactElementFactory(props),
+                    self.mountConfig.domNode
                 );
             });
         });
