@@ -147,7 +147,7 @@ AtomReactContext.prototype.publishCommand = function(command) {
                     }
                 }
             } catch (error) {
-                var errorMessage = "Store ["+store.store.name+"] could not handle command";
+                var errorMessage = "Store ["+store.store.name+"] could not handle command because " + error.message;
                 console.error(errorMessage,command);
                 console.error(error.stack);
                 throw new Error(errorMessage);
@@ -189,7 +189,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
             // TODO maybe stores should be regular event listeners?
             self.router.routerManager.handleEvent(event);
         } catch (error) {
-            var errorMessage = "Router could not handle event";
+            var errorMessage = "Router could not handle event because " + error.message;
             console.error(errorMessage,event);
             console.error(error.stack);
             throw new Error(errorMessage);
@@ -200,7 +200,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
                 // TODO maybe stores should be regular event listeners?
                 store.storeManager.handleEvent(event);
             } catch (error) {
-                var errorMessage = "Store ["+store.store.name+"] could not handle event";
+                var errorMessage = "Store ["+store.store.name+"] could not handle event because " + error.message;
                 console.error(errorMessage,event);
                 console.error(error.stack);
                 throw new Error(errorMessage);
@@ -210,7 +210,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
             try {
                 listener(event);
             } catch (error) {
-                var errorMessage = "Event listener ["+listener+"] could not handle event";
+                var errorMessage = "Event listener ["+listener+"] could not handle event because " + error.message;
                 console.error(errorMessage,event);
                 console.error(error.stack);
                 throw new Error(errorMessage);
