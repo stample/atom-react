@@ -47,6 +47,11 @@ function dereferenceCursors(props) {
 
 // TODO switch back to use of cursor.getCreationTimeValue(), because atom can't change during render phases it is safe
 var WithPureRenderMixin = {
+    // TODO this is not very good we should use the former method using cursor creation time value instead
+    componentDidMount: function() {
+        var dereferencedProps = dereferenceCursors(this.props);
+        this.previouslyRenderedDereferencedProps = dereferencedProps;
+    },
     shouldComponentUpdate: function(nextProps, nextState) {
         try {
             var dereferencedProps = dereferenceCursors(nextProps);
