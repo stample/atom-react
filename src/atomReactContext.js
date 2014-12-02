@@ -317,9 +317,13 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
                 console.debug("%cX","color: green; background-color: green;","["+path.toString()+"][",afterValue,"]");
             }
             else {
+                // TODO it seems this case happen for null vs undefined
+                // For now we fail safe and simply bypass this log statement: to handle later!
+                /*
                 console.error("before",beforeValue);
                 console.error("after",afterValue);
                 throw new Error("unexpected case!!!");
+                */
             }
         });
     } else {
