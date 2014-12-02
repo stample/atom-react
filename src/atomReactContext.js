@@ -302,13 +302,26 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
         var previousState = this.lastRenderedState;
         var currentState = this.atom.get();
         this.lastRenderedState = currentState;
+        console.debug("###########################################################\n# Rendering state",this.atom.get());
         var pathDiff = AtomUtils.getPathDiff(previousState,currentState);
-        var pathDiffString = pathDiff.map(function(path) { return "# -> " + path.toString(); }).join("\n");
-        console.debug(
-            "###########################################################\n# Rendering state\n#",
-            this.atom.get(),
-            "\n# Modified paths since previous rendering are:\n"+pathDiffString
-        );
+        pathDiff.forEach(function(path) {
+            var beforeValue = AtomUtils.getPathValue(previousState,path);
+            var afterValue = AtomUtils.getPathValue(currentState,path);
+            if ( Preconditions.hasValue(beforeValue) && Preconditions.hasValue(afterValue) ) {
+                console.debug("%cX","color: orange; background-color: orange;","["+path.toString()+"][",beforeValue," -> ",afterValue,"]");
+            }
+            else if ( Preconditions.hasValue(beforeValue) && !Preconditions.hasValue(afterValue) ) {
+                console.debug("%cX","color: red; background-color: red;","["+path.toString()+"][",beforeValue,"]");
+            }
+            else if ( !Preconditions.hasValue(beforeValue) && Preconditions.hasValue(afterValue) ) {
+                console.debug("%cX","color: green; background-color: green;","["+path.toString()+"][",afterValue,"]");
+            }
+            else {
+                console.error("before",beforeValue);
+                console.error("after",afterValue);
+                throw new Error("unexpected case!!!");
+            }
+        });
     } else {
         console.debug("Rendering state",this.atom.get());
     }
