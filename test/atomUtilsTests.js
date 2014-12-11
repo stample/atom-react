@@ -143,3 +143,113 @@ describe("AtomUtils.setPathValue", function() {
 
 
 });
+
+
+
+
+
+describe("AtomUtils.getPathDiff", function() {
+
+
+    it("should return path of a modified path", function() {
+        // Given
+        var state1 = {
+            root: {
+                myint: 3,
+                mystring: "test",
+                myobject: {
+                    myObjectString: "string"
+                }
+            }
+        };
+        var state2 = AtomUtils.setPathValue(state1,["root","myobject","myObjectString"],"newString");
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["root","myobject","myObjectString"]);
+    });
+
+    it("should not return path of a modified path setted with same value", function() {
+        // Given
+        var state1 = {
+            root: {
+                myint: 3,
+                mystring: "test",
+                myobject: {
+                    myObjectString: "string"
+                }
+            }
+        };
+        var state2 = AtomUtils.setPathValue(state1,["root","myobject","myObjectString"],"newString");
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["root","myobject","myObjectString"]);
+    });
+
+    it("should return path for newly created attribute", function() {
+        // Given
+        var state1 = {
+            root: {
+                myint: 3,
+                mystring: "test",
+                myobject: {
+                    myObjectString: "string"
+                }
+            }
+        };
+        var state2 = AtomUtils.setPathValue(state1,["root","myobject","myObjectString2"],"newString");
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["root","myobject","myObjectString2"]);
+    });
+
+
+    // TODO how to make this one pass? change impl
+    it("should return root path for objects created dynamically", function() {
+        // Given
+        var state1 = { myObject : {} };
+        var state2 = AtomUtils.setPathValue(state1,["myObject","att1","att2","att3"],"value");
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["myObject"]);
+    });
+
+
+    it("should return paths for newly created attributes, modified attributes and deleted attributes", function() {
+        // Given
+        var state1 = {
+            root: {
+                myint: 3,
+                mystring: "test",
+                myobject: {
+                    myObjectString: "string"
+                },
+                mybool: true
+            }
+        };
+        var state2 = state1;
+        state2 = AtomUtils.setPathValue(state2,["root","mybool"],false);
+        state2 = AtomUtils.setPathValue(state2,["root","mystring"],undefined);
+        state2 = AtomUtils.setPathValue(state2,["root","myint"],3); // This one should not appear in the list!
+        state2 = AtomUtils.setPathValue(state2,["root","myobject","newStringAttr"],"test");
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(3);
+        expect(paths).toContain(["root","mybool"]);
+        expect(paths).toContain(["root","mystring"]);
+        expect(paths).toContain(["root","myobject","newStringAttr"]);
+    });
+
+
+
+
+
+});
