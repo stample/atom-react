@@ -95,59 +95,57 @@ exports.setPathValue = setPathValue;
 
 
 
-
-function getKeyDiff(state1,state2) {
-    if ( state1 === state2 ) {
-        return [];
-    }
-    else {
-        // Merge and deduplicate keys
-        var keysToCompare = _.union(
-            _.keys(state1),
-            _.keys(state2)
-        );
-        // If one is defined and not the other we can directly return the union
-        var oneIsUndefined = (!!state1 !== !!state2);
-        if ( oneIsUndefined ) {
-            return keysToCompare;
-        }
-        // Else we return only modified keys by reference equality check between the 2 objects
-        else {
-            return keysToCompare.filter(function(key) {
-                return state1[key] !== state2[key];
-            });
-        }
-    }
+// Merge but also deduplicate keys present in both states
+function getAllKeys(state1,state2) {
+    return _.union(
+        _.keys(state1),
+        _.keys(state2)
+    );
 }
-exports.getKeyDiff = getKeyDiff;
 
+function groupKeysByEquality(state1,state2) {
+    var allKeys = getAllKeys(state1, state2);
+    return _.groupBy(allKeys, function(key) {
+        return state1[key] === state2[key];
+    });
+}
 
-function getPathDiffRecursive(state1,state2,currentPath) {
-    /*
-     console.error("-------------------------------");
-     console.debug("currentPath",currentPath);
-     console.debug("state 1",state1);
-     console.debug("state 2",state2);
-     */
+var EmptyArrayConstant = []
+
+// TODO this algorithm is far from being perfect and must be reworked totally to make the tests pass
+function getPathDiffRecursive(state1,state2,currentPath,returnCurrentPathIfAllKeysAreDifferent) {
     var oneIsUndefined = (!!state1 !== !!state2);
     if ( state1 === state2 || oneIsUndefined) {
         return [currentPath];
     }
-    var keyDiff = getKeyDiff(state1,state2);
-    if ( keyDiff.length === 0 ) {
+    var groupedKeys = groupKeysByEquality(state1,state2);
+    var equalKeys = groupedKeys.true || EmptyArrayConstant;
+    var notEqualKeys = groupedKeys.false || EmptyArrayConstant;
+    var totalKeys = equalKeys.length + notEqualKeys.length;
+    var allKeysAreEqual = (equalKeys.length === totalKeys);
+    var allKeysAreDifferent = (notEqualKeys.length === totalKeys);
+    if ( allKeysAreEqual ) {
         return [currentPath];
     }
-    //console.debug("key diff",keyDiff);
-    var pathsList = keyDiff.map(function(key) {
+
+    // TODO not sure of this implementation! it needs to be tested better!
+    // What we want is to return the current path if next level diffs have different keys (somehow we want to "factorise" the diffs for readability)
+    if ( allKeysAreDifferent && returnCurrentPathIfAllKeysAreDifferent ) {
+        return [currentPath];
+    }
+    var doReturnCurrentPathIfAllKeysAreDifferent = (allKeysAreDifferent);
+
+
+    var pathsList = notEqualKeys.map(function(key) {
         var newCurrentPath = currentPath.concat([key]);
-        var pathsForKey = getPathDiffRecursive(state1[key],state2[key],newCurrentPath);
+        var pathsForKey = getPathDiffRecursive(state1[key],state2[key],newCurrentPath,doReturnCurrentPathIfAllKeysAreDifferent);
         //console.debug(currentPath,"paths for key",key,"=",pathsForKey);
         return pathsForKey;
     });
     var paths = _.flatten(pathsList,true);
-    // console.debug(currentPath,"paths = ",paths);
     return paths;
 }
+
 function getPathDiff(state1,state2) {
     return getPathDiffRecursive(state1,state2,[]);
 }

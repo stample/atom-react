@@ -249,6 +249,48 @@ describe("AtomUtils.getPathDiff", function() {
     });
 
 
+    it("should return path of overriden object", function() {
+        // Given
+        var state1 = {
+            root: {
+                myint: 3,
+                mystring: "test",
+                myobject: {
+                    attr1: "string",
+                    attr2: "string2"
+                },
+                mybool: true
+            }
+        };
+        var state2 = state1;
+        state2 = AtomUtils.setPathValue(state2,["root","myobject"],
+            {
+                attr3: "value3",
+                attr4: "value4",
+                attr5: { attr6: 6 }
+            }
+        );
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["root","myobject","newStringAttr"]);
+    });
+
+
+    it("should return path of overriden object", function() {
+        // Given
+        var state1 = {root: { myObject: { aaa: "x" } } };
+        var state2 = state1;
+        state2 = AtomUtils.setPathValue(state2,["root","myObject"],{bbb: "y",ccc: "z"});
+        // When
+        var paths = AtomUtils.getPathDiff(state1,state2);
+        // Then
+        expect(paths.length).toBe(1);
+        expect(paths).toContain(["myObject"]);
+    });
+
+
 
 
 
