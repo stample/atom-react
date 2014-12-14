@@ -6,19 +6,20 @@ var _ = require("lodash");
 
 
 var AtomAsyncValueStates = {
-    LOADIND: "LOADIND",
+    LOADING: "LOADING",
     SUCCESS: "SUCCESS",
     ERROR: "ERROR"
-}
+};
+
 exports.AtomAsyncValueStates = AtomAsyncValueStates;
 
 
 
 var AtomAsyncValue = function(state) {
-    this.state = state || AtomAsyncValueStates.LOADIND;
+    this.state = state || AtomAsyncValueStates.LOADING;
 };
 AtomAsyncValue.prototype.isLoading = function() {
-    return this.state === AtomAsyncValueStates.LOADIND;
+    return this.state === AtomAsyncValueStates.LOADING;
 };
 AtomAsyncValue.prototype.isSuccess = function() {
     return this.state === AtomAsyncValueStates.SUCCESS;
