@@ -311,7 +311,7 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
                 console.debug("%cX","color: orange; background-color: orange;","["+path.toString()+"][",beforeValue," -> ",afterValue,"]");
             }
             else if ( Preconditions.hasValue(beforeValue) && !Preconditions.hasValue(afterValue) ) {
-                console.debug("%cX","color: red; background-color: red;","["+path.toString()+"][",beforeValue,"]");
+                console.debug("%cX","color: red; background-color: red;","["+path.toString()+"]");
             }
             else if ( !Preconditions.hasValue(beforeValue) && Preconditions.hasValue(afterValue) ) {
                 console.debug("%cX","color: green; background-color: green;","["+path.toString()+"][",afterValue,"]");
