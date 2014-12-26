@@ -42,15 +42,31 @@ exports.AtomReactRouter = AtomReactRouter;
 var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     Preconditions.checkHasValue(context);
     Preconditions.checkHasValue(store);
+    var self = this;
     this.context = context;
     this.path = path;
     this.store = store;
+
+    this.disabledCommandPublishing = function(command) {
+      throw new Error("You can only publish commands while receiving events. " +
+      "This permits to implement the DDD Saga pattern. Read more about it on the internet");
+    };
+    this.enabledCommandPublishing = function(command) {
+        // Yes, commands are not published synchronously but are "queued"
+        // and do not participate in the current transaction
+        setTimeout(function() {
+            self.context.publishCommand(command);
+        },0);
+    };
+
     // TODO probably not very elegant
     this.store.description.cursor = this.context.atom.cursor().follow(this.path);
     this.store.description.transact = this.context.atom.transact.bind(this.context.atom);
 
     // TODO this is a temporary hack that should be removed when we know how to handle CQRS Sagas better
     this.store.description.temporaryHack_publishEvents = this.context.publishEvents.bind(this.context);
+
+    this.store.description.publishCommand = this.disabledCommandPublishing
 
     // TODO remove deprecated name!
     this.store.description.storeCursor = this.context.atom.cursor().follow(this.path);
@@ -63,9 +79,23 @@ AtomReactStoreManager.prototype.init = function() {
     }
 };
 
-AtomReactStoreManager.prototype.handleEvent = function(event) {
-    this.store.description.handleEvent(event);
+AtomReactStoreManager.prototype.withCommandPublishingEnabled = function(tasks) {
+    this.store.description.publishCommand = this.enabledCommandPublishing;
+    try {
+        tasks();
+    } finally {
+        this.store.description.publishCommand = this.disabledCommandPublishing;
+    }
 };
+
+AtomReactStoreManager.prototype.handleEvent = function(event) {
+    if ( this.store.description.handleEvent ) {
+        this.withCommandPublishingEnabled(function() {
+            this.store.description.handleEvent(event);
+        }.bind(this))
+    }
+};
+
 AtomReactStoreManager.prototype.handleCommand = function(command) {
     if ( this.store.description.handleCommand ) {
         return this.store.description.handleCommand(command);
