@@ -101,10 +101,10 @@ AtomCursor.prototype.update = function(updateFunction,initialValueFallback) {
     this.atom.setPathValue(this.atomPath,valueToSet);
 };
 AtomCursor.prototype.plus = function(number) {
-    this.update(function(value) { return value+number });
+    this.update(function(value) { return value+number },0);
 };
 AtomCursor.prototype.minus = function(number) {
-    this.update(function(value) { return value-number });
+    this.update(function(value) { return value-number },0);
 };
 AtomCursor.prototype.toggle = function(initialValueFallback) {
     this.update(function(value) { return !value },!!initialValueFallback);
