@@ -1,2 +1,2 @@
-atom-react
+Atom-React
 ==========
