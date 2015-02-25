@@ -14,7 +14,6 @@ var AtomReactContext = function AtomReactContext() {
     this.recorder = new AtomReactRecorder(this);
     this.stores = [];
     this.eventListeners = [];
-    this.router = undefined;
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
     this.beforeRenderCallback = undefined;
@@ -64,13 +63,6 @@ AtomReactContext.prototype.addStore = function(store) {
         store: store,
         storeManager: store.createStoreManager(this)
     });
-};
-
-AtomReactContext.prototype.setRouter = function(router) {
-    this.router = {
-        router: router,
-        routerManager: router.createStoreManager(this)
-    };
 };
 
 
@@ -185,15 +177,6 @@ AtomReactContext.prototype.publishEvent = function(event) {
     var self = this;
     // All events are treated inside a transaction
     this.transact(function() {
-        try {
-            // TODO maybe stores should be regular event listeners?
-            self.router.routerManager.handleEvent(event);
-        } catch (error) {
-            var errorMessage = "Router could not handle event because " + error.message;
-            console.error(errorMessage,event);
-            console.error(error.stack);
-            throw new Error(errorMessage);
-        }
 
         self.stores.forEach(function(store) {
             try {
@@ -223,7 +206,6 @@ AtomReactContext.prototype.publishEvent = function(event) {
 AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
     Preconditions.checkHasValue(this.mountConfig,"Mount config is mandatory");
     Preconditions.checkHasValue(this.stores,"Stores array is mandatory");
-    Preconditions.checkHasValue(this.router,"router is mandatory");
     console.debug("Starting AtomReactContext",this);
     this.publishEvent(bootstrapEvent);
 };
