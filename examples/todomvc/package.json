@@ -5,7 +5,7 @@
   "repository": "https://github.com/stample/atom-react",
   "main": "js/app.js",
   "dependencies": {
-    "atom-react": "0.12.7",
+    "atom-react": "0.12.8",
     "keymirror": "~0.1.0",
     "lodash": "^3.3.1",
     "react": "^0.12.0"

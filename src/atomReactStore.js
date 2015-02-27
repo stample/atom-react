@@ -8,33 +8,17 @@ var AtomCursor = require("./atom/atomCursor");
 
 
 
-var AtomReactStore = function AtomReactStore(name,description) {
-    Preconditions.checkHasValue(name);
+var AtomReactStore = function AtomReactStore(nameOrPath,description) {
+    Preconditions.checkHasValue(nameOrPath);
     Preconditions.checkHasValue(description);
-    this.name = name;
+    this.nameOrPath = nameOrPath;
     this.description = description;
 };
 AtomReactStore.prototype.createStoreManager = function(context) {
-    return new AtomReactStoreManager(context,["stores",this.name],this);
+    var path = (this.nameOrPath instanceof Array) ? this.nameOrPath : [this.nameOrPath];
+    return new AtomReactStoreManager(context,[path],this);
 };
 exports.AtomReactStore = AtomReactStore;
-
-
-
-
-
-
-// TODO remove this router stuff!
-var AtomReactRouter = function AtomReactRouter(description) {
-    Preconditions.checkHasValue(description);
-    this.description = description;
-};
-AtomReactRouter.prototype.createStoreManager = function(context) {
-    return new AtomReactStoreManager(context,["routing"],this);
-};
-exports.AtomReactRouter = AtomReactRouter;
-
-
 
 
 

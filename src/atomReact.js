@@ -204,11 +204,6 @@ function newStore(name,description) {
 }
 exports.newStore = newStore;
 
-function newRouter(description) {
-    return new AtomReactStore.AtomReactRouter(description);
-}
-exports.newRouter = newRouter;
-
 exports.Preconditions = Preconditions
 exports.DeepFreeze = DeepFreeze
 

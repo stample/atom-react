@@ -20,7 +20,7 @@ var TodoApp = AtomReact.createPureClass("TodoApp",{
   },
 
   render: function() {
-    var todoStoreCursor = this.props.appStateCursor.follow("stores","todoStore");
+    var todoStoreCursor = this.props.appStateCursor.follow("todoStore");
     var allTodos = todoStoreCursor.get().todoList;
     return (
         <div>
