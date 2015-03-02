@@ -1,5 +1,7 @@
 'use strict';
 
+var _ = require("lodash");
+
 var React = require("react/addons");
 var Preconditions = require("./utils/preconditions");
 
@@ -13,6 +15,8 @@ var AtomReactCommand = require("./atomReactCommand");
 var AtomReactContext = function AtomReactContext() {
     this.recorder = new AtomReactRecorder(this);
     this.stores = [];
+    this.reactContext = {};
+    this.memoizedReactContext = undefined;
     this.eventListeners = [];
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
@@ -64,6 +68,42 @@ AtomReactContext.prototype.addStore = function(store) {
         storeManager: store.createStoreManager(this)
     });
 };
+
+AtomReactContext.prototype.setReactContext = function(context,forceFullUpdate) {
+    this.reactContext = context;
+    this.memoizedReactContext = undefined;
+    if ( forceFullUpdate ) {
+        // See https://github.com/facebook/react/issues/3298
+        setTimeout(function() {
+            this.unmount();
+            this.renderCurrentAtomState();
+        }.bind(this),0);
+    }
+};
+
+
+AtomReactContext.prototype.unmount = function() {
+    React.unmountComponentAtNode(this.mountConfig.domNode);
+};
+
+AtomReactContext.prototype.getMemoizedReactContext = function(atomToRender) {
+    Preconditions.checkHasValue(atomToRender);
+    if ( !this.memoizedReactContext ) {
+        // TODO pass the AtomReact context (this) directly to react ! it will be more flexible
+        var libContext = {
+            atom: atomToRender,
+            publishEvent: this.publishEvent.bind(this),
+            publishEvents: this.publishEvents.bind(this),
+            publishCommand: this.publishCommand.bind(this),
+            addEventListener: this.addEventListener.bind(this),
+            removeEventListener: this.removeEventListener.bind(this)
+        };
+        this.memoizedReactContext = _.assign({},this.reactContext,libContext);
+        console.debug("React context built: ",this.memoizedReactContext);
+    }
+    return this.memoizedReactContext;
+};
+
 
 
 AtomReactContext.prototype.addEventListener = function(listener) {
@@ -202,7 +242,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
     })
 };
 
-
+// TODO this method is probably useless
 AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
     Preconditions.checkHasValue(this.mountConfig,"Mount config is mandatory");
     Preconditions.checkHasValue(this.stores,"Stores array is mandatory");
@@ -239,8 +279,6 @@ AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
 };
 
 
-
-
 AtomReactContext.prototype.renderCurrentAtomState = function() {
     this.renderAtomState(this.atom);
 };
@@ -250,20 +288,12 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
     var props = {
         appStateCursor: atomToRender.cursor()
     };
-    // TODO pass the AtomReact context directly to react !
-    var context = {
-        atom: atomToRender,
-        publishEvent: this.publishEvent.bind(this),
-        publishEvents: this.publishEvents.bind(this),
-        publishCommand: this.publishCommand.bind(this),
-        addEventListener: this.addEventListener.bind(this),
-        removeEventListener: this.addEventListener.bind(this)
-    };
+    var reactContext = this.getMemoizedReactContext(atomToRender);
     try {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
         atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
-            React.withContext(context,function() {
+            React.withContext(reactContext,function() {
                 React.render(
                     self.mountConfig.reactElementFactory(props),
                     self.mountConfig.domNode

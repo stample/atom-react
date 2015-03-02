@@ -204,8 +204,8 @@ function newStore(name,description) {
 }
 exports.newStore = newStore;
 
-exports.Preconditions = Preconditions
-exports.DeepFreeze = DeepFreeze
+exports.Preconditions = Preconditions;
+exports.DeepFreeze = DeepFreeze;
 
 
 
