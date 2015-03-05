@@ -20,7 +20,7 @@ module.exports = AtomReact.newStore("todoStore", {
 
     switch (event.name) {
       case TodoConstants.TODO_START:
-        this.todosCursor().set([]);
+        this.todosCursor().set(event.data.initialState || []);
         break;
 
 
