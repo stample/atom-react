@@ -58,10 +58,10 @@ AtomReactContext.prototype.setLogPublishedCommands = function(bool) {
 
 AtomReactContext.prototype.addStore = function(store) {
     if ( store.description.reactToChange ) {
-        console.warn("Store [",store.name,"] should rather not implement 'reactToChange' because it will be removed in the future");
+        console.warn("Store [",store.nameOrPath,"] should rather not implement 'reactToChange' because it will be removed in the future");
     }
     if ( store.description.init ) {
-        console.warn("Store [",store.name,"] should rather not implement 'init' because it will be removed in the future");
+        console.warn("Store [",store.nameOrPath,"] should rather not implement 'init' because it will be removed in the future");
     }
     this.stores.push({
         store: store,
@@ -168,8 +168,8 @@ AtomReactContext.prototype.publishCommand = function(command) {
                 var eventOrEvents = store.storeManager.handleCommand(command);
                 if ( eventOrEvents ) {
                     if ( commandHandlerByStore ) {
-                        throw new Error("Command can't be handled by store " + store.store.name +
-                            " because it was already handled by " + commandHandlerByStore.store.name);
+                        throw new Error("Command can't be handled by store " + store.store.nameOrPath +
+                            " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
                     }
                     commandHandlerByStore = store;
                     if ( eventOrEvents instanceof Array ) {
@@ -179,7 +179,7 @@ AtomReactContext.prototype.publishCommand = function(command) {
                     }
                 }
             } catch (error) {
-                var errorMessage = "Store ["+store.store.name+"] could not handle command because " + error.message;
+                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle command because " + error.message;
                 console.error(errorMessage,command);
                 console.error(error.stack);
                 throw new Error(errorMessage);
@@ -223,7 +223,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
                 // TODO maybe stores should be regular event listeners?
                 store.storeManager.handleEvent(event);
             } catch (error) {
-                var errorMessage = "Store ["+store.store.name+"] could not handle event because " + error.message;
+                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event because " + error.message;
                 console.error(errorMessage,event);
                 console.error(error.stack);
                 throw new Error(errorMessage);
