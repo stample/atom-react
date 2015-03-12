@@ -72,6 +72,7 @@ AtomReactContext.prototype.addStore = function(store) {
 AtomReactContext.prototype.setReactContext = function(context,forceFullUpdate) {
     this.reactContext = context;
     this.memoizedReactContext = undefined;
+    this.memoizedChildContextProviderFactory = undefined;
     if ( forceFullUpdate ) {
         // See https://github.com/facebook/react/issues/3298
         setTimeout(function() {
@@ -86,7 +87,7 @@ AtomReactContext.prototype.unmount = function() {
     React.unmountComponentAtNode(this.mountConfig.domNode);
 };
 
-AtomReactContext.prototype.getMemoizedReactContext = function(atomToRender) {
+AtomReactContext.prototype.getMemoizedReactContextHolder = function(atomToRender) {
     Preconditions.checkHasValue(atomToRender);
     if ( !this.memoizedReactContext ) {
         // TODO pass the AtomReact context (this) directly to react ! it will be more flexible
@@ -99,9 +100,13 @@ AtomReactContext.prototype.getMemoizedReactContext = function(atomToRender) {
             removeEventListener: this.removeEventListener.bind(this)
         };
         this.memoizedReactContext = _.assign({},this.reactContext,libContext);
+        this.memoizedChildContextProviderFactory = ChildContextProviderFactory(this.memoizedReactContext);
         console.debug("React context built: ",this.memoizedReactContext);
     }
-    return this.memoizedReactContext;
+    return {
+        context: this.memoizedReactContext,
+        childContextProviderFactory: this.memoizedChildContextProviderFactory
+    };
 };
 
 
@@ -284,22 +289,21 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
 };
 
 AtomReactContext.prototype.renderAtomState = function(atomToRender) {
-    var self = this;
     var props = {
         appStateCursor: atomToRender.cursor()
     };
-    var reactContext = this.getMemoizedReactContext(atomToRender);
+    var reactContextHolder = this.getMemoizedReactContextHolder(atomToRender);
     try {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
         atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
-            React.withContext(reactContext,function() {
-                React.render(
-                    self.mountConfig.reactElementFactory(props),
-                    self.mountConfig.domNode
-                );
-            });
-        });
+            React.withContext(reactContextHolder.context,function() {
+                // TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
+                var component = this.mountConfig.reactElementFactory(props);
+                var componentWithContext = reactContextHolder.childContextProviderFactory({children: component, context: reactContextHolder.context});
+                React.render(componentWithContext, this.mountConfig.domNode);
+            }.bind(this));
+        }.bind(this));
         console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
     } catch (error) {
         console.error("Could not render application with state\n",atomToRender.get());
@@ -307,6 +311,29 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
         throw new Error("Could not render application");
     }
 };
+
+
+// TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
+function ChildContextProviderFactory(context) {
+
+    // TODO we are very permissive on the childContextTypes (is it a good idea?)
+    var childContextTypes = {};
+    _.keys(context).forEach(function(contextKey) {
+        childContextTypes[contextKey] = React.PropTypes.any.isRequired
+    });
+
+    return React.createFactory(React.createClass({
+        displayName: "ChildContextProvider",
+        childContextTypes: childContextTypes,
+        getChildContext: function() {
+            return this.props.context;
+        },
+        render: function() {
+            return React.DOM.div({children: this.props.children});
+        }
+    }));
+}
+
 
 
 AtomReactContext.prototype.logStateBeforeRender = function() {
