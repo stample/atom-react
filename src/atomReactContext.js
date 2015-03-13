@@ -297,12 +297,11 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
         atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
-            React.withContext(reactContextHolder.context,function() {
-                // TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
-                var component = this.mountConfig.reactElementFactory(props);
-                var componentWithContext = reactContextHolder.childContextProviderFactory({children: component, context: reactContextHolder.context});
-                React.render(componentWithContext, this.mountConfig.domNode);
-            }.bind(this));
+            // TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
+            var componentFactory = this.mountConfig.reactElementFactory;
+            var componentProvider = function() { return componentFactory(props); };
+            var componentWithContext = reactContextHolder.childContextProviderFactory({componentProvider: componentProvider, context: reactContextHolder.context});
+            React.render(componentWithContext, this.mountConfig.domNode);
         }.bind(this));
         console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
     } catch (error) {
@@ -313,7 +312,6 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
 };
 
 
-// TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
 function ChildContextProviderFactory(context) {
 
     // TODO we are very permissive on the childContextTypes (is it a good idea?)
@@ -325,11 +323,17 @@ function ChildContextProviderFactory(context) {
     return React.createFactory(React.createClass({
         displayName: "ChildContextProvider",
         childContextTypes: childContextTypes,
+        propTypes: {
+            componentProvider: React.PropTypes.func.isRequired,
+            context: React.PropTypes.object.isRequired
+        },
         getChildContext: function() {
             return this.props.context;
         },
         render: function() {
-            return React.DOM.div({children: this.props.children});
+            // TODO simplify this "componentProvider hack" after React 0.14? See See https://github.com/facebook/react/issues/3392
+            var children = this.props.componentProvider();
+            return React.DOM.div({children: children});
         }
     }));
 }
