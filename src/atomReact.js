@@ -186,6 +186,7 @@ exports.createPureClass = createPureClass;
 
 var PropTypes = {
     isCursor: React.PropTypes.instanceOf(AtomCursor).isRequired,
+    isOptionalCursor: React.PropTypes.instanceOf(AtomCursor),
     isAsyncValue: React.PropTypes.instanceOf(AtomAsyncValue).isRequired
 };
 exports.PropTypes = PropTypes;
