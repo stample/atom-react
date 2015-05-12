@@ -82,6 +82,11 @@ AtomReactContext.prototype.setReactContext = function(context,forceFullUpdate) {
     }
 };
 
+AtomReactContext.prototype.updateReactContext = function(updateFunction) {
+    var newContext = updateFunction(this.reactContext);
+    this.setReactContext(newContext,true);
+};
+
 
 AtomReactContext.prototype.unmount = function() {
     React.unmountComponentAtNode(this.mountConfig.domNode);
