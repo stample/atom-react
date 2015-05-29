@@ -151,7 +151,7 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
     var shouldRender = (newState !== previousState);
     if ( shouldRender ) {
         if ( this.beforeRenderCallback ) this.beforeRenderCallback(this.atom.get());
-        this.renderCurrentAtomState.bind(this)
+        this.renderCurrentAtomState();
         if ( this.recorder.isRecording() ) {
             this.recorder.addRecord(newState);
         }
