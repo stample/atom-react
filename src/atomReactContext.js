@@ -151,9 +151,7 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
     var shouldRender = (newState !== previousState);
     if ( shouldRender ) {
         if ( this.beforeRenderCallback ) this.beforeRenderCallback(this.atom.get());
-        this.printReactPerfMesuresAround(
-            this.renderCurrentAtomState.bind(this)
-        );
+        this.renderCurrentAtomState.bind(this)
         if ( this.recorder.isRecording() ) {
             this.recorder.addRecord(newState);
         }
@@ -179,7 +177,7 @@ AtomReactContext.prototype.publishCommand = function(command) {
                 if ( eventOrEvents ) {
                     if ( commandHandlerByStore ) {
                         throw new Error("Command can't be handled by store " + store.store.nameOrPath +
-                            " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
+                        " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
                     }
                     commandHandlerByStore = store;
                     if ( eventOrEvents instanceof Array ) {
@@ -264,31 +262,6 @@ AtomReactContext.prototype.transact = function(task) {
     this.atom.transact(task);
 };
 
-
-AtomReactContext.prototype.printReactPerfMesuresAround = function(task) {
-    if ( this.perfMesureMode === "none" ) {
-        task();
-    }
-    else {
-        React.addons.Perf.start();
-        task();
-        React.addons.Perf.stop();
-        try {
-            switch(this.perfMesureMode) {
-                case "wasted": React.addons.Perf.printWasted(); break;
-                case "inclusive": React.addons.Perf.printInclusive(); break;
-                case "exclusive": React.addons.Perf.printExclusive(); break;
-                default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
-            }
-        }
-        catch (error) {
-            console.error("Can't print React perf mesures: " + e.message);
-            console.error(e.stack);
-        }
-    }
-};
-
-
 AtomReactContext.prototype.renderCurrentAtomState = function() {
     this.renderAtomState(this.atom);
 };
@@ -306,9 +279,19 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             var componentFactory = this.mountConfig.reactElementFactory;
             var componentProvider = function() { return componentFactory(props); };
             var componentWithContext = reactContextHolder.childContextProviderFactory({componentProvider: componentProvider, context: reactContextHolder.context});
-            React.render(componentWithContext, this.mountConfig.domNode);
+            if ( this.perfMesureMode !== "none" ) React.addons.Perf.start();
+            React.render(componentWithContext, this.mountConfig.domNode, function() {
+                console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
+                if ( this.perfMesureMode !== "none" ) React.addons.Perf.stop();
+                switch(this.perfMesureMode) {
+                    case "none": break;
+                    case "wasted": React.addons.Perf.printWasted(); break;
+                    case "inclusive": React.addons.Perf.printInclusive(); break;
+                    case "exclusive": React.addons.Perf.printExclusive(); break;
+                    default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
+                }
+            }.bind(this));
         }.bind(this));
-        console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
     } catch (error) {
         console.error("Could not render application with state\n",atomToRender.get());
         console.error(error.stack);
@@ -368,10 +351,10 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
                 // TODO it seems this case happen for null vs undefined
                 // For now we fail safe and simply bypass this log statement: to handle later!
                 /*
-                console.error("before",beforeValue);
-                console.error("after",afterValue);
-                throw new Error("unexpected case!!!");
-                */
+                 console.error("before",beforeValue);
+                 console.error("after",afterValue);
+                 throw new Error("unexpected case!!!");
+                 */
             }
         });
     } else {
