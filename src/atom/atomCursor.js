@@ -3,6 +3,7 @@
 var _ = require("lodash");
 
 var Preconditions = require("../utils/preconditions");
+var Immutables = require("../utils/immutables");
 var ArgumentsOrArray = require("../utils/argumentsOrArray");
 
 var AtomUtils = require("./atomUtils");
@@ -51,6 +52,13 @@ AtomCursor.prototype.get = function() {
 AtomCursor.prototype.getOrElse = function(fallback) {
     var value = this.value();
     return Preconditions.hasValue(value) ? value : fallback;
+};
+
+AtomCursor.prototype.getOrEmptyArray = function() {
+    return this.getOrElse(Immutables.EmptyArray);
+};
+AtomCursor.prototype.getOrEmptyObject = function() {
+    return this.getOrElse(Immutables.EmptyObject);
 };
 
 

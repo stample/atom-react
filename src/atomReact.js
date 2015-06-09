@@ -4,6 +4,7 @@ var React = require("react/addons");
 var ReactLink = require("react/lib/ReactLink");
 var Preconditions = require("./utils/preconditions");
 var DeepFreeze = require("./utils/deepFreeze");
+var Immutables = require("./utils/immutables");
 var ArgumentsOrArray = require("./utils/argumentsOrArray");
 
 var Atom = require("./atom/atom");
@@ -213,3 +214,7 @@ exports.DeepFreeze = DeepFreeze;
 
 exports.Event = AtomReactEvent;
 exports.Command = AtomReactCommand;
+
+
+exports.EmptyArray = Immutables.EmptyArray;
+exports.EmptyObject = Immutables.EmptyObject;
