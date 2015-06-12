@@ -12,6 +12,11 @@ var AtomUtils = require("./atom/atomUtils");
 var AtomReactEvent = require("./atomReactEvent");
 var AtomReactCommand = require("./atomReactCommand");
 
+
+// With NODE_ENV=production, React does not have perf module
+// see https://github.com/facebook/react/issues/4107
+var hasPerfPlugin = !!React.addons.Perf;
+
 var AtomReactContext = function AtomReactContext() {
     this.recorder = new AtomReactRecorder(this);
     this.stores = [];
@@ -41,7 +46,14 @@ AtomReactContext.prototype.debugMode = function() {
 };
 
 AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
-    this.perfMesureMode = perfMesureMode;
+    if ( hasPerfPlugin ) {
+        this.perfMesureMode = perfMesureMode;
+    }
+    else {
+        if ( perfMesureMode != "none" ) {
+            console.warn("React is in production mode, and does not have Perf module. You won't be able to use AtomReact with setPerfMesureMode("+perfMesureMode+")");
+        }
+    }
 };
 
 AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
