@@ -45,7 +45,7 @@ AtomCursor.prototype.exists = function() {
 AtomCursor.prototype.get = function() {
     var value = this.value();
     Preconditions.checkHasValue(value,"No value for path " + this.atomPath + " -> maybe you want to use " +
-        "cursor.getOrElse(undefined) instead if the value you look for may be absent when the cursor is created ");
+    "cursor.getOrElse(undefined) instead if the value you look for may be absent when the cursor is created ");
     return value;
 };
 
@@ -78,25 +78,25 @@ AtomCursor.prototype.unset = function() {
 
 
 AtomCursor.prototype.push = function(value) {
-    var list = this.getOrElse([]);
+    var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call push on an array. "+this.atomPath);
     var newList = list.concat([value]);
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.unshift = function(value) {
-    var list = this.getOrElse([]);
+    var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call unshift on an array. "+this.atomPath);
     var newList = [value].concat(list);
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.without = function(value) {
-    var list = this.value();
+    var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call without on an array. "+this.atomPath);
     var newList = _.without(list,value);
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.filter = function(value) {
-    var list = this.value();
+    var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call filter on an array. "+this.atomPath);
     var newList = _.filter(list,value);
     this.atom.setPathValue(this.atomPath,newList);
@@ -125,7 +125,7 @@ AtomCursor.prototype.follow = function() {
 };
 
 AtomCursor.prototype.list = function() {
-    var list = this.value();
+    var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call list on an array. "+this.atomPath);
     return list.map(function(item,index) {
         return this.follow(index);
