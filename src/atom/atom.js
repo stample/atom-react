@@ -46,11 +46,18 @@ Atom.prototype.isInTransaction = function() {
 };
 Atom.prototype.openTransaction = function() {
     this.currentTransactionState = this.state;
+    this.currentTransactionDate = Date.now();
 };
 Atom.prototype.commitTransaction = function() {
     var transactionState = this.currentTransactionState;
     this.currentTransactionState = undefined
     this.state = transactionState;
+    var duration = Date.now() - this.currentTransactionDate;
+    this.currentTransactionDate = undefined;
+    var transactionData = {
+        duration: duration
+    };
+    return transactionData;
 };
 Atom.prototype.rollbackTransaction = function() {
     this.currentTransactionState = undefined
@@ -90,9 +97,9 @@ Atom.prototype.transact = function(tasks) {
             // "lock" these values before calling the callbacks
             var previousState = this.state;
             this.beforeTransactionCommit(this.currentTransactionState,previousState);
-            this.commitTransaction();
+            var transactionData = this.commitTransaction();
             try {
-                this.afterTransactionCommit(this.state,previousState);
+                this.afterTransactionCommit(this.state,previousState,transactionData);
             } catch(error) {
                 console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited",error.message);
                 console.error(error.stack);

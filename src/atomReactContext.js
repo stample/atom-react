@@ -29,6 +29,7 @@ var AtomReactContext = function AtomReactContext() {
     this.beforeRenderCallback = undefined;
     this.logPublishedEvents = false;
     this.logPublishedCommands = false;
+    this.logTransactions = false;
 
     this.atom = new Atom({
         beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
@@ -43,6 +44,7 @@ AtomReactContext.prototype.debugMode = function() {
     this.setVerboseStateChangeLog(true);
     this.setLogPublishedEvents(true);
     this.setLogPublishedCommands(true);
+    this.setLogTransactions(true);
 };
 
 AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
@@ -64,6 +66,9 @@ AtomReactContext.prototype.setLogPublishedEvents = function(bool) {
 };
 AtomReactContext.prototype.setLogPublishedCommands = function(bool) {
     this.logPublishedCommands = bool;
+};
+AtomReactContext.prototype.setLogTransactions = function(bool) {
+    this.logTransactions = bool;
 };
 
 
@@ -169,7 +174,10 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
         }
     }
 };
-AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState) {
+AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState,transactionData) {
+    if ( this.logTransactions ) {
+        console.debug("Atom transaction commit",transactionData);
+    }
     var shouldRender = (newState !== previousState);
     if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
