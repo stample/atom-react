@@ -152,6 +152,44 @@ var WithEventListenerMixin = {
 exports.WithEventListenerMixin = WithEventListenerMixin;
 
 
+
+
+function getAllCursors(props) {
+    return Object.keys(props)
+        .map(function(key) {
+            return props[key];
+        })
+        .filter(function(value) {
+            return value instanceof AtomCursor;
+        });
+}
+function memoizeCursor(cursor) {
+    cursor.memoize();
+}
+function unmemoizeCursor(cursor) {
+    cursor.unmemoize();
+}
+// This memoizes the cursors just before the render method is called.
+// Cursors are then unmemoized to provide read-your-writes semantics
+var WithCursorsMemoizationMixin = {
+    componentWillMount: function() {
+        getAllCursors(this.props).forEach(memoizeCursor);
+    },
+    componentDidMount: function() {
+        getAllCursors(this.props).forEach(unmemoizeCursor);
+    },
+    componentWillUpdate: function(nextProps) {
+        getAllCursors(nextProps).forEach(memoizeCursor);
+    },
+    componentDidUpdate: function() {
+        getAllCursors(this.props).forEach(unmemoizeCursor);
+    }
+};
+exports.WithCursorsMemoizationMixin = WithCursorsMemoizationMixin;
+
+
+
+
 function addMixins(config) {
     config.mixins = config.mixins || [];
     config.mixins.push(WithPureRenderMixin);
@@ -160,6 +198,7 @@ function addMixins(config) {
     config.mixins.push(WithCommandPublisherMixin);
     config.mixins.push(WithEventPublisherMixin);
     config.mixins.push(WithEventListenerMixin);
+    config.mixins.push(WithCursorsMemoizationMixin);
 }
 
 

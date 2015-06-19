@@ -10,15 +10,6 @@ var AtomUtils = require("./atomUtils");
 var AtomAsyncUtils = require("./atomAsyncUtils");
 
 
-// TODO freeze (not deeply) cursor attributes after creation
-var AtomCursor = function AtomCursor(atom,atomPath) {
-    this.atom = atom;
-    this.atomPath = atomPath;
-
-    // The value of the cursor when it was created;
-    this.creationTimeValue = this.value();
-};
-
 
 function ensureIsArray(maybeArray,message) {
     if ( !(maybeArray instanceof Array) ) {
@@ -26,13 +17,53 @@ function ensureIsArray(maybeArray,message) {
     }
 }
 
+
+
+var AtomCursor = function AtomCursor(atom,atomPath, options) {
+    var options = options || Immutables.EmptyObject;
+    this.atom = atom;
+    this.atomPath = atomPath;
+    var value = this.value();
+
+    // The value of the cursor when it was created;
+    this.creationTimeValue = value;
+
+    this.memoized = options.memoized;
+    if ( this.memoized ) {
+        this.memoizedValue = value;
+    }
+};
+
+
+AtomCursor.prototype.memoize = function() {
+    var value = this.value();
+    this.memoized = true;
+    this.memoizedValue = value;
+    return this;
+};
+AtomCursor.prototype.unmemoize = function() {
+    this.memoized = false;
+    this.memoizedValue = undefined;
+    return this;
+};
+
+
+
+
+// TODO this should be removed
 AtomCursor.prototype.transact = function(tasks) {
     this.atom.transact(tasks);
 };
 
+
+
+
 AtomCursor.prototype.value = function() {
-    return this.atom.getPathValue(this.atomPath);
+    return this.memoized ?
+        this.memoizedValue :
+        this.atom.getPathValue(this.atomPath);
 };
+
 
 AtomCursor.prototype.getCreationTimeValue = function() {
     return this.creationTimeValue;
@@ -121,7 +152,8 @@ AtomCursor.prototype.toggle = function(initialValueFallback) {
 AtomCursor.prototype.follow = function() {
     var pathToFollow = ArgumentsOrArray(arguments);
     var newPath = this.atomPath.concat(pathToFollow);
-    return new AtomCursor(this.atom,newPath);
+    // If current cursor is memoized, the next one will also be memoized
+    return new AtomCursor(this.atom,newPath, { memoized: this.memoized });
 };
 
 AtomCursor.prototype.list = function() {

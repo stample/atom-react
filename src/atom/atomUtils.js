@@ -28,18 +28,17 @@ function pathToObjectPath(path,objectAtPath) {
 
 // TODO this can probably be a lot optimized
 function getPathValue(object,path) {
-    if ( path.length == 0 ) {
+    if ( !Preconditions.hasValue(object) ) {
+        return undefined;
+    }
+    else if ( path.length == 0 ) {
         return object;
     }
     else {
         var head = path[0];
         var tail = path.slice(1);
         var headValue = object[head];
-        if ( Preconditions.hasValue(headValue) ) {
-            return getPathValue(headValue,tail);
-        } else {
-            return undefined;
-        }
+        return getPathValue(headValue,tail);
     }
 }
 exports.getPathValue = getPathValue;
