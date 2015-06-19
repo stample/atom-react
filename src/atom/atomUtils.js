@@ -28,11 +28,11 @@ function pathToObjectPath(path,objectAtPath) {
 
 // TODO this can probably be a lot optimized
 function getPathValue(object,path) {
-    if ( !Preconditions.hasValue(object) ) {
-        return undefined;
-    }
-    else if ( path.length == 0 ) {
+    if ( path.length == 0 ) {
         return object;
+    }
+    else if ( !Preconditions.hasValue(object) ) {
+        return undefined;
     }
     else {
         var head = path[0];

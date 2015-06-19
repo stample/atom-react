@@ -117,19 +117,17 @@ exports.pushPathAsyncValue = pushPathAsyncValue;
 
 
 
-function getPathAsyncValueListCursors(atom,listPath) {
-    var asyncValueList = atom.getPathValue(listPath);
+function getPathAsyncValueListCursors(cursor) {
+    var asyncValueList = cursor.getOrElse(undefined);
     if ( asyncValueList instanceof Array ) {
         var cursorsArray = asyncValueList.map(function(asyncValue,asyncValueIndex) {
             if ( asyncValue.isSuccess() ) {
                 if ( asyncValue.value instanceof Array ) {
                     return asyncValue.value.map(function(asyncValueItem,asyncValueItemIndex) {
-                        var cursorPath = listPath.concat([asyncValueIndex,"value",asyncValueItemIndex]);
-                        return atom.cursor().follow(cursorPath);
+                        return cursor.follow(asyncValueIndex,"value",asyncValueItemIndex);
                     })
                 } else {
-                    var cursorPath = listPath.concat([asyncValueIndex,"value"]);
-                    return atom.cursor().follow(cursorPath);
+                    return cursor.follow(asyncValueIndex,"value");
                 }
             } else {
                 return [];
@@ -137,9 +135,10 @@ function getPathAsyncValueListCursors(atom,listPath) {
         });
         return _.flatten(cursorsArray);
     } else {
-        throw new Error("can only be called on an array, not a "+asyncValueList+" for path="+listPath);
+        throw new Error("can only be called on an array, not a "+asyncValueList+" for path="+cursor.atomPath);
     }
 }
+
 exports.getPathAsyncValueListCursors = getPathAsyncValueListCursors;
 
 

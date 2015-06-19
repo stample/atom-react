@@ -19,26 +19,49 @@ function ensureIsArray(maybeArray,message) {
 
 
 
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// CURSOR PRIMITIVES
+///////////////////////
+
+
 var AtomCursor = function AtomCursor(atom,atomPath, options) {
     var options = options || Immutables.EmptyObject;
     this.atom = atom;
     this.atomPath = atomPath;
-    var value = this.value();
 
-    // The value of the cursor when it was created;
-    this.creationTimeValue = value;
+    // A dynamic cursor never precomputes or memoize a value, it always use up to date data
+    this.dynamic = !!options.dynamic;
+    this.memoized = !!options.memoized;
 
-    this.memoized = options.memoized;
-    if ( this.memoized ) {
-        this.memoizedValue = value;
+
+    Preconditions.checkCondition( !(this.dynamic && this.memoized) ,"A cursor can't be dynamic and memoized at the same time!");
+    if ( this.dynamic ) {
+        // Nothing to do
+    }
+    else {
+        // The value of the cursor when it was created.
+        // It can be forced as an optimization if the cursor creator knows the creation time value
+        this.creationTimeValue = options.hasOwnProperty("creationTimeValue") ? options.creationTimeValue : this.getFreshValue();
+        if ( this.memoized ) {
+            this.memoizedValue = this.creationTimeValue;
+        }
     }
 };
 
 
 AtomCursor.prototype.memoize = function() {
+    Preconditions.checkCondition(!this.dynamic,"You can't memoize a dynamic cursor");
     var value = this.value();
     this.memoized = true;
     this.memoizedValue = value;
+    return this;
+};
+AtomCursor.prototype.memoizeToCreationTimeValue = function() {
+    Preconditions.checkCondition(!this.dynamic,"You can't memoize a dynamic cursor");
+    this.memoized = true;
+    this.memoizedValue = this.creationTimeValue;
     return this;
 };
 AtomCursor.prototype.unmemoize = function() {
@@ -48,24 +71,44 @@ AtomCursor.prototype.unmemoize = function() {
 };
 
 
-
-
 // TODO this should be removed
 AtomCursor.prototype.transact = function(tasks) {
     this.atom.transact(tasks);
 };
 
-
-
+AtomCursor.prototype.getFreshValue = function() {
+    return this.atom.getPathValue(this.atomPath);
+};
 
 AtomCursor.prototype.value = function() {
-    return this.memoized ?
-        this.memoizedValue :
-        this.atom.getPathValue(this.atomPath);
+    return this.memoized ? this.memoizedValue : this.getFreshValue();
+};
+
+AtomCursor.prototype.follow = function() {
+    var pathToFollow = ArgumentsOrArray(arguments);
+    var newPath = this.atomPath.concat(pathToFollow);
+    return new AtomCursor(this.atom,newPath, {
+        // If current cursor is memoized or dynamic, that configuration will propagate...
+        dynamic: this.dynamic,
+        memoized: this.memoized,
+        // Minor optimization
+        creationTimeValue: this.dynamic ? undefined : AtomUtils.getPathValue(this.value(),pathToFollow)
+    });
 };
 
 
+
+
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
+// CURSOR API
+///////////////////////
+
 AtomCursor.prototype.getCreationTimeValue = function() {
+    Preconditions.checkCondition(this.dynamic,"A dynamic cursor does not have any creationTimeValue available");
     return this.creationTimeValue;
 };
 
@@ -149,12 +192,6 @@ AtomCursor.prototype.toggle = function(initialValueFallback) {
     this.update(function(value) { return !value },!!initialValueFallback);
 };
 
-AtomCursor.prototype.follow = function() {
-    var pathToFollow = ArgumentsOrArray(arguments);
-    var newPath = this.atomPath.concat(pathToFollow);
-    // If current cursor is memoized, the next one will also be memoized
-    return new AtomCursor(this.atom,newPath, { memoized: this.memoized });
-};
 
 AtomCursor.prototype.list = function() {
     var list = this.getOrEmptyArray();
@@ -178,7 +215,7 @@ AtomCursor.prototype.asyncSuccessUnsafe = function() {
 };
 
 AtomCursor.prototype.asyncList = function() {
-    return AtomAsyncUtils.getPathAsyncValueListCursors(this.atom,this.atomPath);
+    return AtomAsyncUtils.getPathAsyncValueListCursors(this);
 };
 
 

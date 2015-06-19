@@ -17,6 +17,10 @@ var AtomReactCommand = require("./atomReactCommand");
 // see https://github.com/facebook/react/issues/4107
 var hasPerfPlugin = !!React.addons.Perf;
 
+// For render the cursors are memoized
+var AtomCursorMemoizedOption = {memoized: true};
+
+
 var AtomReactContext = function AtomReactContext() {
     this.recorder = new AtomReactRecorder(this);
     this.stores = [];
@@ -288,7 +292,7 @@ AtomReactContext.prototype.renderCurrentAtomState = function() {
 
 AtomReactContext.prototype.renderAtomState = function(atomToRender) {
     var props = {
-        appStateCursor: atomToRender.cursor()
+        appStateCursor: atomToRender.cursor(AtomCursorMemoizedOption)
     };
     var reactContextHolder = this.getMemoizedReactContextHolder(atomToRender);
     try {

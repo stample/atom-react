@@ -7,6 +7,9 @@ var Preconditions = require("./utils/preconditions");
 var AtomCursor = require("./atom/atomCursor");
 
 
+// The stores are all "dynamic", they do not memoize anything and always return fresh data on .get()
+var StoreCursorOptions = {dynamic: true};
+
 
 var AtomReactStore = function AtomReactStore(nameOrPath,description) {
     Preconditions.checkHasValue(nameOrPath);
@@ -44,13 +47,13 @@ var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     };
 
     // TODO probably not very elegant
-    this.store.description.cursor = this.context.atom.cursor().follow(this.path);
+    this.store.description.cursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
     this.store.description.transact = this.context.atom.transact.bind(this.context.atom);
 
     this.store.description.publishCommand = this.disabledCommandPublishing
 
     // TODO remove deprecated name!
-    this.store.description.storeCursor = this.context.atom.cursor().follow(this.path);
+    this.store.description.storeCursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
 };
 
 // TODO this should be removed in favor of bootstrap event

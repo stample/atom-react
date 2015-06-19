@@ -16,62 +16,43 @@ var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 var AtomReactEvent = require("./atomReactEvent");
 var AtomReactCommand = require("./atomReactCommand");
 
-function shallowEqualProps(props, nextProps) {
-    if (props === nextProps) {
+
+
+
+
+function isSameValueOrCursor(value,nextValue) {
+    if ( value instanceof AtomCursor && nextValue instanceof AtomCursor ) {
+        return value.creationTimeValue === nextValue.creationTimeValue;
+    } else {
+        return value === nextValue;
+    }
+}
+
+// This is the "shallowEqual" from React, a little bit modified to handle cursors
+function shallowEqual(objA, objB) {
+    if (objA === objB) {
         return true;
     }
-
-    if ( Object.keys(props).length !== Object.keys(nextProps).length ) {
-        return false;
-    }
-
     var key;
-    for (key in props) {
-        if ( props[key] !== nextProps[key] ) return false;
+    // Test for A's keys different from B.
+    for (key in objA) {
+        if ( objA.hasOwnProperty(key) && (!objB.hasOwnProperty(key) || !isSameValueOrCursor(objA[key],objB[key])) ) {
+            return false;
+        }
+    }
+    // Test for B's keys missing from A.
+    for (key in objB) {
+        if ( objB.hasOwnProperty(key) && !objA.hasOwnProperty(key) ) {
+            return false;
+        }
     }
     return true;
 }
 
-function dereferenceCursors(props) {
-    var dereferenced = {};
-    Object.keys(props).forEach(function(key) {
-        if ( props[key] instanceof AtomCursor ) {
-            dereferenced[key] = props[key].value();
-        } else {
-            dereferenced[key] = props[key];
-        }
-    });
-    return dereferenced;
-}
 
-
-
-// TODO switch back to use of cursor.getCreationTimeValue(), because atom can't change during render phases it is safe
 var WithPureRenderMixin = {
-    // TODO this is not very good we should use the former method using cursor creation time value instead
-    componentDidMount: function() {
-        var dereferencedProps = dereferenceCursors(this.props);
-        this.previouslyRenderedDereferencedProps = dereferencedProps;
-    },
     shouldComponentUpdate: function(nextProps, nextState) {
-        try {
-            var dereferencedProps = dereferenceCursors(nextProps);
-            if ( !this.previouslyRenderedDereferencedProps ) {
-                this.previouslyRenderedDereferencedProps = dereferencedProps;
-                return true;
-            }
-            var shouldUpdate = !shallowEqualProps(dereferencedProps,this.previouslyRenderedDereferencedProps);
-            if ( shouldUpdate ) {
-                //console.debug("["+this.getDisplayName()+"] should update!");
-                this.previouslyRenderedDereferencedProps = dereferencedProps;
-            } else {
-                //console.debug("["+this.getDisplayName()+"] should not update!")
-            }
-            return shouldUpdate;
-        } catch (e) {
-            console.error("Error in 'shouldComponentUpdate' for component ",this.getDisplayName(), e.message, e.stack);
-            return true;
-        }
+        return !shallowEqual(this.props,nextProps);
     }
 };
 exports.WithPureRenderMixin = WithPureRenderMixin;
@@ -163,9 +144,14 @@ function getAllCursors(props) {
             return value instanceof AtomCursor;
         });
 }
+
+// As during the whole render, the cursor values are not supposed
+// to change we memoize them to the value they had at creation time
 function memoizeCursor(cursor) {
-    cursor.memoize();
+    cursor.memoizeToCreationTimeValue();
 }
+// But we unmemoize the cursors outside the render to provide read-your-writes semantics in callbacks like
+// componentDidMount, componentDidUpdate, timers, intervals etc...
 function unmemoizeCursor(cursor) {
     cursor.unmemoize();
 }
@@ -192,13 +178,13 @@ exports.WithCursorsMemoizationMixin = WithCursorsMemoizationMixin;
 
 function addMixins(config) {
     config.mixins = config.mixins || [];
+    config.mixins.push(WithCursorsMemoizationMixin);
     config.mixins.push(WithPureRenderMixin);
     config.mixins.push(WithCursorLinkingMixin);
     config.mixins.push(WithTransactMixin);
     config.mixins.push(WithCommandPublisherMixin);
     config.mixins.push(WithEventPublisherMixin);
     config.mixins.push(WithEventListenerMixin);
-    config.mixins.push(WithCursorsMemoizationMixin);
 }
 
 

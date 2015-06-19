@@ -128,11 +128,11 @@ Atom.prototype.get = function() {
 
 /**
  * Get a cursor,, that permits to focus on a given path of the Atom
- * @param path (defaults to atom root cursor)
+ * @param options
  * @return {AtomCursor}
  */
-Atom.prototype.cursor = function() {
-    return new AtomCursor(this,[]);
+Atom.prototype.cursor = function(options) {
+    return new AtomCursor(this,[],options);
 };
 
 /**
