@@ -108,7 +108,7 @@ AtomCursor.prototype.follow = function() {
 ///////////////////////
 
 AtomCursor.prototype.getCreationTimeValue = function() {
-    Preconditions.checkCondition(this.dynamic,"A dynamic cursor does not have any creationTimeValue available");
+    Preconditions.checkCondition(!this.dynamic,"A dynamic cursor does not have any creationTimeValue available");
     return this.creationTimeValue;
 };
 
