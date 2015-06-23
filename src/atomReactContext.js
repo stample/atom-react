@@ -179,10 +179,10 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
     }
 };
 AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState,transactionData) {
-    if ( this.logTransactions ) {
+    var shouldRender = (newState !== previousState);
+    if ( shouldRender && this.logTransactions ) {
         console.debug("Atom transaction commit",transactionData);
     }
-    var shouldRender = (newState !== previousState);
     if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
 
