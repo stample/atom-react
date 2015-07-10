@@ -345,7 +345,7 @@ function ChildContextProviderFactory(context) {
         render: function() {
             // TODO simplify this "componentProvider hack" after React 0.14? See See https://github.com/facebook/react/issues/3392
             var children = this.props.componentProvider();
-            return React.DOM.div({children: children});
+            return children;
         }
     }));
 }
