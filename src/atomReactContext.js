@@ -213,7 +213,7 @@ AtomReactContext.prototype.publishCommand = function(command) {
             } catch (error) {
                 var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle command because " + error.message;
                 console.error(errorMessage,command);
-                console.error(error.stack);
+                console.error(error.stack ? error.stack : error);
                 throw new Error(errorMessage);
             }
         });
@@ -257,7 +257,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
             } catch (error) {
                 var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event because " + error.message;
                 console.error(errorMessage,event);
-                console.error(error.stack);
+                console.error(error.stack ? error.stack : error);
                 throw new Error(errorMessage);
             }
         });
@@ -267,7 +267,7 @@ AtomReactContext.prototype.publishEvent = function(event) {
             } catch (error) {
                 var errorMessage = "Event listener ["+listener+"] could not handle event because " + error.message;
                 console.error(errorMessage,event);
-                console.error(error.stack);
+                console.error(error.stack ? error.stack : error);
                 throw new Error(errorMessage);
             }
         });
@@ -317,9 +317,8 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             }.bind(this));
         }.bind(this));
     } catch (error) {
-        console.error("Could not render application with state\n",atomToRender.get());
-        console.error(error.stack);
-        throw new Error("Could not render application");
+        console.error("Could not render state", atomToRender.get(),error.stack ? error.stack : error);
+        throw error;
     }
 };
 
@@ -495,7 +494,7 @@ AtomReactRecorder.prototype.replay = function(speedFactor) {
         }.bind(this),tickPace);
     } catch (e) {
         console.error("Error during replay of state records",this.stateRecords,e);
-        console.error(e.stack);
+        console.error(error.stack ? error.stack : error);
     } finally {
         this.replaying = false;
     }

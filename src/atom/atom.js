@@ -101,12 +101,12 @@ Atom.prototype.transact = function(tasks) {
             try {
                 this.afterTransactionCommit(this.state,previousState,transactionData);
             } catch(error) {
-                console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited",error.message);
-                console.error(error.stack);
+                console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited -> "+error.message);
+                console.error( error.stack ? error.stack : error );
             }
         } catch (error) {
-            console.error("Error during atom transaction! Atom state will be rollbacked",error.message);
-            console.error(error.stack);
+            console.error("Error during atom transaction! Atom state will be rollbacked -> "+error.message);
+            console.error( error.stack ? error.stack : error );
             this.rollbackTransaction();
         }
     }

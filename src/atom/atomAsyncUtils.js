@@ -71,7 +71,7 @@ function setupAsyncValueSwapping(atom,path,asyncValue,promise,logCompletion) {
             var swapped = atom.compareAndSwapPathValue(path,asyncValue,asyncValue.toError(error));
             if ( logCompletion ) {
                 console.error("Async value completion error",path,"Swap success=",swapped);
-                console.error(error.stack);
+                console.error(error.stack ? error.stack : error);
             }
             deferred.reject(error);
         })
