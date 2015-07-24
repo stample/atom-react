@@ -19,7 +19,7 @@ var AtomReactStore = function AtomReactStore(nameOrPath,description) {
 };
 AtomReactStore.prototype.createStoreManager = function(context) {
     var path = (this.nameOrPath instanceof Array) ? this.nameOrPath : [this.nameOrPath];
-    return new AtomReactStoreManager(context,[path],this);
+    return new AtomReactStoreManager(context,path,this);
 };
 exports.AtomReactStore = AtomReactStore;
 
