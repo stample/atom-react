@@ -117,10 +117,19 @@ exports.pushPathAsyncValue = pushPathAsyncValue;
 
 
 
+
 function getPathAsyncValueListCursors(cursor) {
     var asyncValueList = cursor.getOrElse(undefined);
     if ( typeof asyncValueList == "undefined") {
         return [];
+    }
+    else if ( asyncValueList instanceof AtomAsyncValue ) {
+        if ( asyncValueList.isSuccess() ) {
+            return [].concat(asyncValueList.value);
+        }
+        else {
+            return [];
+        }
     }
     else if ( asyncValueList instanceof Array ) {
         var cursorsArray = asyncValueList.map(function(asyncValue,asyncValueIndex) {
@@ -129,19 +138,21 @@ function getPathAsyncValueListCursors(cursor) {
                     return asyncValue.value.map(function(asyncValueItem,asyncValueItemIndex) {
                         return cursor.follow(asyncValueIndex,"value",asyncValueItemIndex);
                     })
-                } else {
+                }
+                else {
                     return cursor.follow(asyncValueIndex,"value");
                 }
-            } else {
+            }
+            else {
                 return [];
             }
         });
         return _.flatten(cursorsArray);
-    } else {
+    }
+    else {
         throw new Error("getPathAsyncValueListCursors can only be called on an array, not a "+asyncValueList+" for path="+cursor.atomPath);
     }
 }
-
 exports.getPathAsyncValueListCursors = getPathAsyncValueListCursors;
 
 
