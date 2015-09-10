@@ -116,36 +116,38 @@ exports.pushPathAsyncValue = pushPathAsyncValue;
 
 
 
+function followValues(cursor) {
+    if ( !cursor.exists() ) {
+        return [];
+    }
+    if ( cursor.isInstanceOf(Array) ) {
+        return cursor.list();
+    }
+    else {
+        return [cursor];
+    }
+}
+
+function getAsyncValueCursors(asyncValueCursor) {
+    if ( asyncValueCursor.get().isSuccess() ) {
+        return followValues(asyncValueCursor.follow("value"));
+    }
+    else {
+        return [];
+    }
+}
 
 
 function getPathAsyncValueListCursors(cursor) {
-    var asyncValueList = cursor.getOrElse(undefined);
-    if ( typeof asyncValueList == "undefined") {
+    if ( !cursor.exists() ) {
         return [];
     }
-    else if ( asyncValueList instanceof AtomAsyncValue ) {
-        if ( asyncValueList.isSuccess() ) {
-            return [].concat(asyncValueList.value);
-        }
-        else {
-            return [];
-        }
+    else if ( cursor.isInstanceOf(AtomAsyncValue) ) {
+        return getAsyncValueCursors(cursor);
     }
-    else if ( asyncValueList instanceof Array ) {
-        var cursorsArray = asyncValueList.map(function(asyncValue,asyncValueIndex) {
-            if ( asyncValue.isSuccess() ) {
-                if ( asyncValue.value instanceof Array ) {
-                    return asyncValue.value.map(function(asyncValueItem,asyncValueItemIndex) {
-                        return cursor.follow(asyncValueIndex,"value",asyncValueItemIndex);
-                    })
-                }
-                else {
-                    return cursor.follow(asyncValueIndex,"value");
-                }
-            }
-            else {
-                return [];
-            }
+    else if ( cursor.isInstanceOf(Array) ) {
+        var cursorsArray = cursor.list().map(function(asyncValueCursor) {
+            return getAsyncValueCursors(asyncValueCursor);
         });
         return _.flatten(cursorsArray);
     }
