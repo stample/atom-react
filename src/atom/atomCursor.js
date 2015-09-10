@@ -119,7 +119,7 @@ AtomCursor.prototype.exists = function() {
 AtomCursor.prototype.get = function() {
     var value = this.value();
     Preconditions.checkHasValue(value,"No value for path " + this.atomPath + " -> maybe you want to use " +
-    "cursor.getOrElse(undefined) instead if the value you look for may be absent when the cursor is created ");
+        "cursor.getOrElse(undefined) instead if the value you look for may be absent when the cursor is created ");
     return value;
 };
 
@@ -192,6 +192,9 @@ AtomCursor.prototype.toggle = function(initialValueFallback) {
     this.update(function(value) { return !value },!!initialValueFallback);
 };
 
+AtomCursor.prototype.isInstanceOf = function(clazz) {
+    return this.exists() && this.get() instanceof clazz;
+};
 
 AtomCursor.prototype.list = function() {
     var list = this.getOrEmptyArray();
