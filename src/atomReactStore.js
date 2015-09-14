@@ -29,37 +29,21 @@ exports.AtomReactStore = AtomReactStore;
 var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     Preconditions.checkHasValue(context);
     Preconditions.checkHasValue(store);
-    var self = this;
     this.context = context;
     this.path = path;
     this.store = store;
 
-    /*
-    Check disabled because we sometimes need to publish a saga command after an event resolution
-    this.disabledCommandPublishing = function(command) {
-      throw new Error("You can only publish commands while receiving events. " +
-      "This permits to implement the DDD Saga pattern. Read more about it on the internet");
-    };
-    */
-    this.enabledCommandPublishing = function(command) {
-        // Yes, commands are not published synchronously but are "queued"
-        // and do not participate in the current transaction
-        setTimeout(function() {
-            if ( self.context.logPublishedCommands ) {
-                console.debug("Command published by saga %c"+path,"color: cyan;",command);
-            }
-            self.context.publishCommand(command);
-        },0);
-    };
-
-    // TODO probably not very elegant
     this.store.description.cursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
     this.store.description.transact = this.context.atom.transact.bind(this.context.atom);
 
-    this.store.description.publishCommand = this.enabledCommandPublishing
+    // Commands published as Saga commands (by stores) are not executed directly but rather queued
+    this.store.description.publishCommand = function(command) {
+        if ( this.context.logPublishedCommands ) {
+            console.debug("Command queued by saga %c"+path,"color: cyan;",command);
+        }
+        this.context.queueCommand(command);
+    }.bind(this);
 
-    // TODO remove deprecated name!
-    this.store.description.storeCursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
 };
 
 // TODO this should be removed in favor of bootstrap event

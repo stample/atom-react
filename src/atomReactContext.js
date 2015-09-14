@@ -34,6 +34,7 @@ var AtomReactContext = function AtomReactContext() {
     this.logPublishedEvents = false;
     this.logPublishedCommands = false;
     this.logTransactions = false;
+    this.queuedCommands = [];
 
     this.atom = new Atom({
         beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
@@ -186,6 +187,19 @@ AtomReactContext.prototype.afterTransactionCommit = function(newState,previousSt
     if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
 
+
+// Commands can be queued in publication order, and always executed serially
+AtomReactContext.prototype.queueCommand = function(command) {
+    this.queuedCommands.push(command);
+};
+AtomReactContext.prototype.flushQueuedCommands = function() {
+    while ( this.queuedCommands.length > 0 ) {
+        var cmd = this.queuedCommands.shift();
+        this.publishCommand(cmd);
+    }
+};
+
+
 AtomReactContext.prototype.publishCommand = function(command) {
     if ( this.logPublishedCommands ) {
         console.debug("Publishing command: %c"+command.name,"color: red;",command.data);
@@ -232,46 +246,48 @@ AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
     } else {
         eventArray = Array.prototype.slice.call(arguments, 0);
     }
-    var self = this;
     this.transact(function() {
         eventArray.forEach(function(event) {
-            self.publishEvent(event);
-        })
-    });
+            this.doPublishEvent(event);
+        }.bind(this));
+        this.flushQueuedCommands();
+    }.bind(this));
+};
+
+AtomReactContext.prototype.publishEvent = function(event) {
+    this.transact(function() {
+        this.doPublishEvent(event);
+        this.flushQueuedCommands();
+    }.bind(this));
 };
 
 
-AtomReactContext.prototype.publishEvent = function(event) {
+AtomReactContext.prototype.doPublishEvent = function(event) {
     if ( this.logPublishedEvents ) {
         console.debug("Publishing event: %c"+event.name,"color: green;",event.data);
     }
     Preconditions.checkCondition(event instanceof AtomReactEvent,"Event fired is not an AtomReactEvent! " + event);
-    var self = this;
-    // All events are treated inside a transaction
-    this.transact(function() {
-
-        self.stores.forEach(function(store) {
-            try {
-                // TODO maybe stores should be regular event listeners?
-                store.storeManager.handleEvent(event);
-            } catch (error) {
-                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event because " + error.message;
-                console.error(errorMessage,event);
-                console.error(error.stack ? error.stack : error);
-                throw new Error(errorMessage);
-            }
-        });
-        self.eventListeners.forEach(function(listener) {
-            try {
-                listener(event);
-            } catch (error) {
-                var errorMessage = "Event listener ["+listener+"] could not handle event because " + error.message;
-                console.error(errorMessage,event);
-                console.error(error.stack ? error.stack : error);
-                throw new Error(errorMessage);
-            }
-        });
-    })
+    this.stores.forEach(function(store) {
+        try {
+            // TODO maybe stores should be regular event listeners?
+            store.storeManager.handleEvent(event);
+        } catch (error) {
+            var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event because " + error.message;
+            console.error(errorMessage,event);
+            console.error(error.stack ? error.stack : error);
+            throw new Error(errorMessage);
+        }
+    });
+    this.eventListeners.forEach(function(listener) {
+        try {
+            listener(event);
+        } catch (error) {
+            var errorMessage = "Event listener ["+listener+"] could not handle event because " + error.message;
+            console.error(errorMessage,event);
+            console.error(error.stack ? error.stack : error);
+            throw new Error(errorMessage);
+        }
+    });
 };
 
 // TODO this method is probably useless
