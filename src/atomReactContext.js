@@ -194,18 +194,27 @@ AtomReactContext.prototype.queueCommand = function(command) {
     this.setupQueuedCommandFlushing();
 };
 
+// Not sure it's a good idea, but makes sure any queued command gets published in all cases
 AtomReactContext.prototype.setupQueuedCommandFlushing = function() {
     if ( !this.flushQueuedCommandsTimer ) {
         this.flushQueuedCommandsTimer = setTimeout(function() {
-            console.debug("Flushing queued commands",this.queuedCommands.length);
-            while ( this.queuedCommands.length > 0 ) {
-                var cmd = this.queuedCommands.shift();
-                this.publishCommand(cmd);
-            }
-            this.flushQueuedCommandTimer = undefined;
+            this.doFlushQueuedCommands();
+            this.flushQueuedCommandsTimer = undefined;
         }.bind(this),0);
     }
 };
+
+
+AtomReactContext.prototype.doFlushQueuedCommands = function() {
+    if ( this.queuedCommands.length > 0 ) {
+        console.debug("Flushing queued commands",this.queuedCommands.length);
+        while ( this.queuedCommands.length > 0 ) {
+            var cmd = this.queuedCommands.shift();
+            this.publishCommand(cmd);
+        }
+    }
+};
+
 
 
 AtomReactContext.prototype.publishCommand = function(command) {
@@ -258,12 +267,15 @@ AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
         eventArray.forEach(function(event) {
             this.doPublishEvent(event);
         }.bind(this));
+        this.doFlushQueuedCommands();
     }.bind(this));
 };
+
 
 AtomReactContext.prototype.publishEvent = function(event) {
     this.transact(function() {
         this.doPublishEvent(event);
+        this.doFlushQueuedCommands();
     }.bind(this));
 };
 
