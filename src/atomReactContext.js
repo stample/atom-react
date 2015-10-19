@@ -191,11 +191,19 @@ AtomReactContext.prototype.afterTransactionCommit = function(newState,previousSt
 // Commands can be queued in publication order, and always executed serially
 AtomReactContext.prototype.queueCommand = function(command) {
     this.queuedCommands.push(command);
+    this.setupQueuedCommandFlushing();
 };
-AtomReactContext.prototype.flushQueuedCommands = function() {
-    while ( this.queuedCommands.length > 0 ) {
-        var cmd = this.queuedCommands.shift();
-        this.publishCommand(cmd);
+
+AtomReactContext.prototype.setupQueuedCommandFlushing = function() {
+    if ( !this.flushQueuedCommandsTimer ) {
+        this.flushQueuedCommandsTimer = setTimeout(function() {
+            console.debug("Flushing queued commands",this.queuedCommands.length);
+            while ( this.queuedCommands.length > 0 ) {
+                var cmd = this.queuedCommands.shift();
+                this.publishCommand(cmd);
+            }
+            this.flushQueuedCommandTimer = undefined;
+        }.bind(this),0);
     }
 };
 
@@ -250,14 +258,12 @@ AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
         eventArray.forEach(function(event) {
             this.doPublishEvent(event);
         }.bind(this));
-        this.flushQueuedCommands();
     }.bind(this));
 };
 
 AtomReactContext.prototype.publishEvent = function(event) {
     this.transact(function() {
         this.doPublishEvent(event);
-        this.flushQueuedCommands();
     }.bind(this));
 };
 
