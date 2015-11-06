@@ -52,7 +52,7 @@ function shallowEqual(objA, objB) {
 
 var WithPureRenderMixin = {
     shouldComponentUpdate: function(nextProps, nextState) {
-        return !shallowEqual(this.props,nextProps);
+        return !shallowEqual(this.props,nextProps) || !shallowEqual(this.state,nextState);
     }
 };
 exports.WithPureRenderMixin = WithPureRenderMixin;
@@ -192,7 +192,6 @@ function addMixins(config) {
 function createPureClass(name,component) {
     Preconditions.checkHasValue(name,"The name attribute is mandatory: this helps to debug compoennts!")
     Preconditions.checkHasValue(component,"The config attribute is mandatory!")
-    Preconditions.checkCondition(!component.initialState,"Pure components should not have any local state, and thus no initialState attribute");
     Preconditions.checkCondition(!component.shouldComponentUpdate,"shouldComponentUpdate is already implemented for you");
     Preconditions.checkCondition(component.render,"render() must be implemented");
     Preconditions.checkCondition(component.propTypes,"propTypes must be provided: this is the component interface!");
