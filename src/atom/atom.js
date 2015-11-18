@@ -21,7 +21,9 @@ var Atom = function Atom(options) {
     this.beforeTransactionCommit = options.beforeTransactionCommit || NOOP;
     this.afterTransactionCommit = options.afterTransactionCommit || NOOP;
     this.currentTransactionState = undefined;
-    DeepFreeze(this.state);
+    if ( process.env.NODE_ENV !== "production" ) {
+        DeepFreeze(this.state);
+    }
 };
 
 
@@ -36,7 +38,9 @@ Atom.prototype.swap = function(newState) {
     if ( this.locked ) {
         throw new Error("Atom is locked because: "+this.lockReason);
     }
-    DeepFreeze(newState);
+    if ( process.env.NODE_ENV !== "production" ) {
+        DeepFreeze(newState);
+    }
     this.currentTransactionState = newState;
 };
 

@@ -1,6 +1,6 @@
 {
   "name": "atom-react",
-  "version": "0.13.25",
+  "version": "0.13.28",
   "description": "An opiniated way to use ReactJS in a functional way in plain old Javascript, inspired by popular Clojurescript wrappers like Om ",
   "keywords": [
     "react",
@@ -22,7 +22,8 @@
     "url": "https://github.com/stample/atom-react.git"
   },
   "dependencies": {
-    "lodash": "~2.4.1"
+    "lodash": "~2.4.1",
+    "envify": "^3.0.0"
   },
   "peerDependencies": {
     "react": ">=0.12.0 || 0.14.0-beta1"
@@ -38,6 +39,11 @@
     "gulp-rename": "~0.2.0",
     "gulp-react": "~0.4.0",
     "gulp-jasmine": "~0.2.0"
+  },
+  "browserify": {
+    "transform": [
+      "envify"
+    ]
   },
   "main": "./src/atomReact",
   "engines": {
