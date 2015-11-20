@@ -1,6 +1,6 @@
 'use strict';
 
-var React = require("react/addons");
+var update = require("react-addons-update");
 var _ = require("lodash");
 
 
@@ -75,11 +75,11 @@ function setPathValue(object,path,value) {
         var undefinedPath = path.slice(definedPath.length,path.length);
         if ( undefinedPath.length === 0 ) {
             var updateFunction = pathToObjectPath(definedPath,{$set: value});
-            return React.addons.update(object, updateFunction);
+            return update(object, updateFunction);
         } else {
             var undefinedObjectPath = pathToObjectPath(undefinedPath,value);
             var updateFunction = pathToObjectPath(definedPath,{$merge: undefinedObjectPath});
-            return React.addons.update(object, updateFunction);
+            return update(object, updateFunction);
         }
     } catch (error) {
         // TODO we should probably create the missing path instead of raising the exception ?

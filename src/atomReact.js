@@ -1,6 +1,6 @@
 'use strict';
 
-var React = require("react/addons");
+var React = require("react");
 var ReactLink = require("react/lib/ReactLink");
 var Preconditions = require("./utils/preconditions");
 var DeepFreeze = require("./utils/deepFreeze");
