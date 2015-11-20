@@ -2,7 +2,8 @@
 
 var _ = require("lodash");
 
-var React = require("react/addons");
+var React = require("react");
+var ReactDOM = require("react-dom");
 var Preconditions = require("./utils/preconditions");
 
 var Atom = require("./atom/atom");
@@ -15,7 +16,11 @@ var AtomReactCommand = require("./atomReactCommand");
 
 // With NODE_ENV=production, React does not have perf module
 // see https://github.com/facebook/react/issues/4107
-var hasPerfPlugin = !!React.addons.Perf;
+var hasPerfPlugin = (process.env.NODE_ENV !== "production");
+var ReactPerf;
+if (hasPerfPlugin) {
+    ReactPerf = require("react-addons-perf");
+}
 
 // For render the cursors are memoized
 var AtomCursorMemoizedOption = {memoized: true};
@@ -111,7 +116,7 @@ AtomReactContext.prototype.updateReactContext = function(updateFunction) {
 
 
 AtomReactContext.prototype.unmount = function() {
-    React.unmountComponentAtNode(this.mountConfig.domNode);
+    ReactDOM.unmountComponentAtNode(this.mountConfig.domNode);
 };
 
 AtomReactContext.prototype.getMemoizedReactContextHolder = function(atomToRender) {
@@ -337,15 +342,15 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             var componentFactory = this.mountConfig.reactElementFactory;
             var componentProvider = function() { return componentFactory(props); };
             var componentWithContext = reactContextHolder.childContextProviderFactory({componentProvider: componentProvider, context: reactContextHolder.context});
-            if ( this.perfMesureMode !== "none" ) React.addons.Perf.start();
-            React.render(componentWithContext, this.mountConfig.domNode, function() {
+            if ( this.perfMesureMode !== "none" ) ReactPerf.start();
+            ReactDOM.render(componentWithContext, this.mountConfig.domNode, function() {
                 console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
-                if ( this.perfMesureMode !== "none" ) React.addons.Perf.stop();
+                if ( this.perfMesureMode !== "none" ) ReactPerf.stop();
                 switch(this.perfMesureMode) {
                     case "none": break;
-                    case "wasted": React.addons.Perf.printWasted(); break;
-                    case "inclusive": React.addons.Perf.printInclusive(); break;
-                    case "exclusive": React.addons.Perf.printExclusive(); break;
+                    case "wasted": ReactPerf.printWasted(); break;
+                    case "inclusive": ReactPerf.printInclusive(); break;
+                    case "exclusive": ReactPerf.printExclusive(); break;
                     default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
                 }
             }.bind(this));
