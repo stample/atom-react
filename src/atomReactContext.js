@@ -3,6 +3,7 @@
 var _ = require("lodash");
 
 var React = require("react");
+var ReactDOM = require("react-dom");
 var Preconditions = require("./utils/preconditions");
 
 var Atom = require("./atom/atom");
