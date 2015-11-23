@@ -109,9 +109,9 @@ Atom.prototype.transact = function(tasks) {
                 console.error( error.stack ? error.stack : error );
             }
         } catch (error) {
-            console.error("Error during atom transaction! Atom state will be rollbacked -> "+error.message);
-            console.error( error.stack ? error.stack : error );
+            console.error("Error during atom transaction! rollback!");
             this.rollbackTransaction();
+            throw error;
         }
     }
 };

@@ -247,10 +247,9 @@ AtomReactContext.prototype.publishCommand = function(command) {
                     }
                 }
             } catch (error) {
-                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle command because " + error.message;
+                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle command";
                 console.error(errorMessage,command);
-                console.error(error.stack ? error.stack : error);
-                throw new Error(errorMessage);
+                throw error;
             }
         });
     });
@@ -295,20 +294,18 @@ AtomReactContext.prototype.doPublishEvent = function(event) {
             // TODO maybe stores should be regular event listeners?
             store.storeManager.handleEvent(event);
         } catch (error) {
-            var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event because " + error.message;
+            var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event";
             console.error(errorMessage,event);
-            console.error(error.stack ? error.stack : error);
-            throw new Error(errorMessage);
+            throw error;
         }
     });
     this.eventListeners.forEach(function(listener) {
         try {
             listener(event);
         } catch (error) {
-            var errorMessage = "Event listener ["+listener+"] could not handle event because " + error.message;
+            var errorMessage = "Event listener ["+listener+"] could not handle event";
             console.error(errorMessage,event);
-            console.error(error.stack ? error.stack : error);
-            throw new Error(errorMessage);
+            throw error;
         }
     });
 };
@@ -356,7 +353,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             }.bind(this));
         }.bind(this));
     } catch (error) {
-        console.error("Could not render state", atomToRender.get(),error.stack ? error.stack : error);
+        console.error("Could not render state", atomToRender.get());
         throw error;
     }
 };
@@ -531,9 +528,9 @@ AtomReactRecorder.prototype.replay = function(speedFactor) {
                 clearInterval(replayInterval);
             }
         }.bind(this),tickPace);
-    } catch (e) {
+    } catch (error) {
         console.error("Error during replay of state records",this.stateRecords,e);
-        console.error(error.stack ? error.stack : error);
+        throw error;
     } finally {
         this.replaying = false;
     }
