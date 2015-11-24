@@ -111,7 +111,10 @@ Atom.prototype.transact = function(tasks) {
         } catch (error) {
             console.error("Error during atom transaction! rollback!");
             this.rollbackTransaction();
-            throw error;
+            // This is a shitty solution but at least we are sure that error will always be logged correctly!
+            setTimeout(function() {
+                throw error;
+            },0);
         }
     }
 };
