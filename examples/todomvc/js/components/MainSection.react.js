@@ -1,9 +1,9 @@
 
 //////////////////////////////////////////////////////
 var React = require('react');
+var ReactDOM = require('react-dom');
 var AtomReact = require("atom-react");
 var _ = require("lodash");
-var TodoEvents = require('../events/TodoEvents');
 //////////////////////////////////////////////////////
 
 
@@ -46,7 +46,7 @@ var MainSection = AtomReact.createPureClass("MainSection",{
   },
 
   _onToggleCompleteAll: function() {
-    this.publish(TodoEvents.toggleCompleteAll());
+    this.actions.toggleCompleteAll();
   }
 
 });

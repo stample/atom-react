@@ -58,6 +58,18 @@ var WithPureRenderMixin = {
 exports.WithPureRenderMixin = WithPureRenderMixin;
 
 
+var WithActionsMixin = {
+    contextTypes: {
+        atomReactContext: React.PropTypes.object.isRequired
+    },
+    // Not using "componentWillMount" because we are not supposed to call actions at this stage!
+    componentDidMount: function() {
+        this.actions = this.context.atomReactContext.actions;
+    }
+};
+exports.WithActionsMixin = WithActionsMixin;
+
+
 
 var WithCursorLinkingMixin = {
     linkCursor: function(cursor) {
@@ -89,6 +101,7 @@ var WithEventPublisherMixin = {
     },
     publish: function() {
         var array = ArgumentsOrArray(arguments);
+        console.error("/!\ publishing events is deprecated: use this.actions.actionName(...) instead");
         this.context.publishEvents(array);
     }
 };
@@ -99,6 +112,7 @@ var WithCommandPublisherMixin = {
         publishCommand: React.PropTypes.func.isRequired
     },
     publishCommand: function(command) {
+        console.error("/!\ publishing commands is deprecated: use this.actions.actionName(...) instead");
         this.context.publishCommand(command);
     }
 };
@@ -182,6 +196,7 @@ function addMixins(config) {
     config.mixins.push(WithCommandPublisherMixin);
     config.mixins.push(WithEventPublisherMixin);
     config.mixins.push(WithEventListenerMixin);
+    config.mixins.push(WithActionsMixin);
 }
 
 

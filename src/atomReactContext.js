@@ -29,6 +29,7 @@ var AtomCursorMemoizedOption = {memoized: true};
 var AtomReactContext = function AtomReactContext() {
     this.recorder = new AtomReactRecorder(this);
     this.stores = [];
+    this.actions = undefined;
     this.reactContext = {};
     this.memoizedReactContext = undefined;
     this.eventListeners = [];
@@ -83,6 +84,13 @@ AtomReactContext.prototype.setLogTransactions = function(bool) {
 
 
 
+AtomReactContext.prototype.setActions = function(actionsFactory) {
+    var publishFn = function publish(event) {
+        this.publishEvents(event);
+    }.bind(this);
+    this.actions = actionsFactory(publishFn);
+}
+
 AtomReactContext.prototype.addStore = function(store) {
     if ( store.description.reactToChange ) {
         console.warn("Store [",store.nameOrPath,"] should rather not implement 'reactToChange' because it will be removed in the future");
@@ -124,6 +132,9 @@ AtomReactContext.prototype.getMemoizedReactContextHolder = function(atomToRender
     if ( !this.memoizedReactContext ) {
         // TODO pass the AtomReact context (this) directly to react ! it will be more flexible
         var libContext = {
+            atomReactContext: this,
+
+            // TODO the atomReactContext should be enough: remove the rest
             atom: atomToRender,
             publishEvent: this.publishEvent.bind(this),
             publishEvents: this.publishEvents.bind(this),
@@ -223,6 +234,7 @@ AtomReactContext.prototype.doFlushQueuedCommands = function() {
 
 
 AtomReactContext.prototype.publishCommand = function(command) {
+    console.error("command publication is deprecated, use actions instead!");
     if ( this.logPublishedCommands ) {
         console.debug("Publishing command: %c"+command.name,"color: red;",command.data);
     }

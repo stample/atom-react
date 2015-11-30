@@ -2,9 +2,9 @@
 
 //////////////////////////////////////////////////////
 var React = require('react');
+var ReactDOM = require('react-dom');
 var AtomReact = require("atom-react");
 var _ = require("lodash");
-var TodoEvents = require('../events/TodoEvents');
 //////////////////////////////////////////////////////
 
 var TodoTextInput = require('./TodoTextInput.react');
@@ -34,7 +34,7 @@ var Header = AtomReact.createPureClass("Header",{
     _onSave: function(text) {
         this.transact(function() {
             this.props.textInputCursor.unset();
-            this.publish(TodoEvents.create(text));
+            this.actions.create(text);
         }.bind(this));
     }
 

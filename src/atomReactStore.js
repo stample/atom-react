@@ -1,6 +1,7 @@
 'use strict';
 
 var React = require("react");
+var _ = require("lodash");
 
 var Preconditions = require("./utils/preconditions");
 
@@ -29,20 +30,36 @@ exports.AtomReactStore = AtomReactStore;
 var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     Preconditions.checkHasValue(context);
     Preconditions.checkHasValue(store);
+    var self = this;
     this.context = context;
     this.path = path;
     this.store = store;
+
+    this.store.description.sideEffects = _.mapValues(context.actions,function(actionFn,actionName) {
+
+        return function sideEffectQueuer() {
+            var sideEffectArguments = arguments;
+            var sideEffect = function() {
+                if ( self.context.logPublishedCommands ) {
+                    console.debug("Side effect action (Saga) triggered by store %c"+path,"color: cyan;",actionName,sideEffectArguments);
+                }
+                actionFn.apply(context.actions, sideEffectArguments);
+            };
+            // The side effects are delayed on purpose and not executed directly - TODO they should be queued
+            setTimeout(sideEffect,0);
+        };
+    });
 
     this.store.description.cursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
     this.store.description.transact = this.context.atom.transact.bind(this.context.atom);
 
     // Commands published as Saga commands (by stores) are not executed directly but rather queued
     this.store.description.publishCommand = function(command) {
-        if ( this.context.logPublishedCommands ) {
+        if ( self.context.logPublishedCommands ) {
             console.debug("Command queued by saga %c"+path,"color: cyan;",command);
         }
-        this.context.queueCommand(command);
-    }.bind(this);
+        self.context.queueCommand(command);
+    };
 
 };
 

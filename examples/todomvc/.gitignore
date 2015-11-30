@@ -1,2 +1,10 @@
-/js/bundle.js
-/js/bundle.min.js
+/dist/**/*
+bundle.js
+bundle.min.js
+.DS_Store
+*~
+**~
+build
+node_modules
+.idea
+*.iml

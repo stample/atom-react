@@ -1,9 +1,9 @@
 
 //////////////////////////////////////////////////////
 var React = require('react');
+var ReactDOM = require('react-dom');
 var AtomReact = require("atom-react");
 var _ = require("lodash");
-var TodoEvents = require('../events/TodoEvents');
 //////////////////////////////////////////////////////
 
 
@@ -58,7 +58,7 @@ var Footer = AtomReact.createPureClass("Footer",{
   },
 
   _onClearCompletedClick: function() {
-    this.publish(TodoEvents.destroyCompleted());
+    this.actions.destroyCompleted();
   }
 
 });

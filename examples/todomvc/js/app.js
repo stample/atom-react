@@ -2,7 +2,7 @@
 var React = require('react');
 var AtomReact = require("atom-react");
 var _ = require("lodash");
-var TodoEvents = require('./events/TodoEvents');
+var TodoActions = require('./events/TodoActions');
 
 
 
@@ -16,10 +16,15 @@ context.setMountConfig(TodoApp, document.getElementById('todoapp'));
 
 context.debugMode();
 
+context.setActions(TodoActions);
+
+
 context.addStore(TodoStore);
 
 
-context.startWithEvent(TodoEvents.start());
+context.actions.start();
+
+
 
 
 

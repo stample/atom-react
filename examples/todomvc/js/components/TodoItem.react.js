@@ -2,16 +2,17 @@
 
 //////////////////////////////////////////////////////
 var React = require('react');
+var ReactDOM = require('react-dom');
 var AtomReact = require("atom-react");
 var _ = require("lodash");
-var TodoEvents = require('../events/TodoEvents');
 //////////////////////////////////////////////////////
 
 
 
 var TodoTextInput = require('./TodoTextInput.react');
 
-var cx = require('react/lib/cx');
+var cx = require('classnames');
+
 
 var TodoItem = AtomReact.createPureClass("TodoItem",{
 
@@ -65,7 +66,7 @@ var TodoItem = AtomReact.createPureClass("TodoItem",{
   },
 
   _onToggleComplete: function() {
-    this.publish(TodoEvents.toggleComplete(this.todo()));
+    this.actions.toggleComplete(this.todo());
   },
 
   _onDoubleClick: function() {
@@ -78,14 +79,14 @@ var TodoItem = AtomReact.createPureClass("TodoItem",{
 
   _onSave: function(text) {
     this.transact(function() {
-      this.publish(TodoEvents.updateText(this.todo().id,text));
+      this.actions.updateText(this.todo().id,text);
       this.props.todoCursor.follow("isEditing").unset();
       this.props.todoCursor.follow("editionText").unset();
     }.bind(this));
   },
 
   _onDestroyClick: function() {
-    this.publish(TodoEvents.destroy(this.todo().id));
+    this.actions.destroy(this.todo().id);
   }
 
 });

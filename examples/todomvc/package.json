@@ -1,26 +1,28 @@
 {
   "name": "todomvc-atomreact",
-  "version": "0.0.1",
+  "version": "0.14.3",
   "description": "TodoMVC AtomReact app",
   "repository": "https://github.com/stample/atom-react",
   "main": "js/app.js",
   "dependencies": {
-    "atom-react": "0.12.8",
+    "atom-react": "0.14.3",
     "keymirror": "~0.1.0",
+    "classnames": "^2.1.3",
     "lodash": "^3.3.1",
-    "react": "^0.12.0"
+    "react": "^0.14.3",
+    "react-dom": "^0.14.3"
   },
   "devDependencies": {
     "browserify": "^6.2.0",
     "envify": "^3.0.0",
     "jest-cli": "~0.1.17",
-    "reactify": "^0.15.2",
+    "reactify": "^1.1.1",
     "uglify-js": "~2.4.15",
     "watchify": "^2.1.1"
   },
   "scripts": {
-    "start": "watchify -o js/bundle.js -v -d .",
-    "build": "NODE_ENV=production browserify . | uglifyjs -cm > js/bundle.min.js"
+    "watchify": "watchify -o bundle.js -v -d ./js/app.js",
+    "browserify": "NODE_ENV=production browserify ./js/app.js | uglifyjs -cm > bundle.min.js"
   },
   "author": "Sebastien Lorber",
   "browserify": {
