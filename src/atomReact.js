@@ -101,7 +101,6 @@ var WithEventPublisherMixin = {
     },
     publish: function() {
         var array = ArgumentsOrArray(arguments);
-        console.error("publishing events is deprecated: use this.actions.actionName(...) instead");
         this.context.publishEvents(array);
     }
 };
