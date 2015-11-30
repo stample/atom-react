@@ -101,7 +101,7 @@ var WithEventPublisherMixin = {
     },
     publish: function() {
         var array = ArgumentsOrArray(arguments);
-        console.error("/!\ publishing events is deprecated: use this.actions.actionName(...) instead");
+        console.error("publishing events is deprecated: use this.actions.actionName(...) instead");
         this.context.publishEvents(array);
     }
 };
@@ -112,7 +112,7 @@ var WithCommandPublisherMixin = {
         publishCommand: React.PropTypes.func.isRequired
     },
     publishCommand: function(command) {
-        console.error("/!\ publishing commands is deprecated: use this.actions.actionName(...) instead");
+        console.error("publishing commands is deprecated: use this.actions.actionName(...) instead");
         this.context.publishCommand(command);
     }
 };

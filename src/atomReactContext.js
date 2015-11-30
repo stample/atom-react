@@ -92,6 +92,9 @@ AtomReactContext.prototype.setActions = function(actionsFactory) {
 }
 
 AtomReactContext.prototype.addStore = function(store) {
+    if ( !this.actions ) {
+        throw new Error("Before adding stores you must add the actions!");
+    }
     if ( store.description.reactToChange ) {
         console.warn("Store [",store.nameOrPath,"] should rather not implement 'reactToChange' because it will be removed in the future");
     }
@@ -326,6 +329,7 @@ AtomReactContext.prototype.doPublishEvent = function(event) {
 AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
     Preconditions.checkHasValue(this.mountConfig,"Mount config is mandatory");
     Preconditions.checkHasValue(this.stores,"Stores array is mandatory");
+    Preconditions.checkHasValue(this.actions,"Actions object is mandatory");
     console.debug("Starting AtomReactContext",this);
     this.publishEvent(bootstrapEvent);
 };
