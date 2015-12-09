@@ -35,7 +35,7 @@ var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
     this.path = path;
     this.store = store;
 
-    this.store.description.sideEffects = _.mapValues(context.actions,function(actionFn,actionName) {
+    this.store.description.sideEffects = _.mapValues(Object.getPrototypeOf(context.actions),function(actionFn,actionName) {
 
         return function sideEffectQueuer() {
             var sideEffectArguments = arguments;
