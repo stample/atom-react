@@ -138,11 +138,9 @@ function getPathDiffRecursive(state1,state2,currentPath,returnCurrentPathIfAllKe
     var pathsList = notEqualKeys.map(function(key) {
         var newCurrentPath = currentPath.concat([key]);
         var pathsForKey = getPathDiffRecursive(state1[key],state2[key],newCurrentPath,doReturnCurrentPathIfAllKeysAreDifferent);
-        //console.debug(currentPath,"paths for key",key,"=",pathsForKey);
-        return pathsForKey;
+        return _.flatten(pathsForKey);
     });
-    var paths = _.flatten(pathsList,true);
-    return paths;
+    return pathsList;
 }
 
 function getPathDiff(state1,state2) {
