@@ -231,6 +231,15 @@ AtomCursor.prototype.setAsyncValue = function(promise,logCompletion) {
 AtomCursor.prototype.pushAsyncValue = function(promise,logCompletion) {
     return AtomAsyncUtils.pushPathAsyncValue(this.atom,this.atomPath,promise,logCompletion);
 };
+AtomCursor.prototype.setAsyncSuccess = function(success) {
+    var asyncSuccess = new AtomAsyncUtils.AtomAsyncValue().toSuccess(success);
+    this.set(asyncSuccess);
+};
+AtomCursor.prototype.setAsyncError = function(error) {
+    var asyncError = new AtomAsyncUtils.AtomAsyncValue().toError(error);
+    this.set(asyncError);
+};
+
 
 
 

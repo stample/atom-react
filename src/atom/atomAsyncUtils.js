@@ -15,7 +15,7 @@ exports.AtomAsyncValueStates = AtomAsyncValueStates;
 
 
 
-var AtomAsyncValue = function(state) {
+var AtomAsyncValue = function AtomAsyncValue(state) {
     this.state = state || AtomAsyncValueStates.LOADING;
 };
 AtomAsyncValue.prototype.isLoading = function() {
