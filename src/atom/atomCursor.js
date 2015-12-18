@@ -178,7 +178,6 @@ AtomCursor.prototype.filter = function(value) {
 
 AtomCursor.prototype.update = function(updateFunction,initialValueFallback) {
     var value = this.value() || initialValueFallback;
-    if ( !Preconditions.hasValue(value) ) throw new Error("you can't update an unexisting value. " + this.atomPath);
     var valueToSet = updateFunction(value);
     this.atom.setPathValue(this.atomPath,valueToSet);
 };
