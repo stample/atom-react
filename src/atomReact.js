@@ -62,13 +62,11 @@ var WithActionsMixin = {
     contextTypes: {
         atomReactContext: React.PropTypes.object.isRequired
     },
-    // Not using "componentWillMount" because we are not supposed to call actions at this stage!
-    componentDidMount: function() {
+    componentWillMount: function() {
         this.actions = this.context.atomReactContext.actions;
     }
 };
 exports.WithActionsMixin = WithActionsMixin;
-
 
 
 var WithCursorLinkingMixin = {
