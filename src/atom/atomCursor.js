@@ -175,7 +175,11 @@ AtomCursor.prototype.filter = function(value) {
     var newList = _.filter(list,value);
     this.atom.setPathValue(this.atomPath,newList);
 };
-
+AtomCursor.prototype.reduce = function(reducer,event) {
+    this.update(function(value) {
+       return reducer(value,event);
+    });
+};
 AtomCursor.prototype.update = function(updateFunction,initialValueFallback) {
     var value = this.value() || initialValueFallback;
     var valueToSet = updateFunction(value);
