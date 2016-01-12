@@ -1,6 +1,6 @@
 {
   "name": "atom-react",
-  "version": "0.14.12",
+  "version": "0.14.13",
   "description": "An opiniated way to use ReactJS in a functional way in plain old Javascript, inspired by popular Clojurescript wrappers like Om ",
   "keywords": [
     "react",
