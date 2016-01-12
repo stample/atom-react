@@ -50,6 +50,7 @@ var AtomReactStoreManager = function AtomReactStoreManager(context,path,store) {
         };
     });
 
+    this.store.description.getState = this.context.getState();
     this.store.description.cursor = this.context.atom.cursor(StoreCursorOptions).follow(this.path);
     this.store.description.transact = this.context.atom.transact.bind(this.context.atom);
 

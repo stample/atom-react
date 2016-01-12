@@ -107,6 +107,11 @@ AtomReactContext.prototype.addStore = function(store) {
     });
 };
 
+AtomReactContext.prototype.getState = function() {
+    return this.atom.get();
+};
+
+
 AtomReactContext.prototype.setReactContext = function(context,forceFullUpdate) {
     this.reactContext = context;
     this.memoizedReactContext = undefined;
