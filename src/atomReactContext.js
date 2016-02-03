@@ -46,6 +46,7 @@ var AtomReactContext = function AtomReactContext() {
         beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
         afterTransactionCommit: this.afterTransactionCommit.bind(this)
     });
+
 };
 module.exports = AtomReactContext;
 
@@ -257,7 +258,7 @@ AtomReactContext.prototype.publishCommand = function(command) {
                 if ( eventOrEvents ) {
                     if ( commandHandlerByStore ) {
                         throw new Error("Command can't be handled by store " + store.store.nameOrPath +
-                        " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
+                          " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
                     }
                     commandHandlerByStore = store;
                     if ( eventOrEvents instanceof Array ) {
@@ -340,7 +341,24 @@ AtomReactContext.prototype.startWithEvent = function(bootstrapEvent) {
 };
 
 AtomReactContext.prototype.transact = function(task) {
-    this.atom.transact(task);
+    if ( this.firstTransactionStatus == "error" ) {
+        console.info("Because of startup error: ignoring subsequent transactional tasks");
+        return;
+    }
+    try {
+        this.atom.transact(task);
+        if ( !this.firstTransactionStatus ) {
+            this.firstTransactionStatus = "success";
+        }
+    }
+    catch (e) {
+        if ( !this.firstTransactionStatus ) {
+            this.firstTransactionStatus = "error";
+            console.error("Serious error on application startup!");
+        }
+        console.error(e);
+        throw e;
+    }
 };
 
 AtomReactContext.prototype.renderCurrentAtomState = function() {
@@ -375,6 +393,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
         }.bind(this));
     } catch (error) {
         console.error("Could not render state", atomToRender.get());
+        console.error(error);
         throw error;
     }
 };
