@@ -316,7 +316,7 @@ AtomReactContext.prototype.doPublishEvent = function(event) {
             store.storeManager.handleEvent(event);
         } catch (error) {
             var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event";
-            console.error(errorMessage,event);
+            console.error(errorMessage,event,error);
             throw error;
         }
     });
@@ -324,8 +324,7 @@ AtomReactContext.prototype.doPublishEvent = function(event) {
         try {
             listener(event);
         } catch (error) {
-            var errorMessage = "Event listener ["+listener+"] could not handle event";
-            console.error(errorMessage,event);
+            console.error("Event listener could not handle event",event,error);
             throw error;
         }
     });
