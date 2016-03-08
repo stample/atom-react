@@ -89,8 +89,18 @@ AtomReactContext.prototype.setActions = function(actionsFactory) {
     var publishFn = function publish(event) {
         this.publishEvents(event);
     }.bind(this);
-    this.actions = actionsFactory(publishFn);
-}
+    var getContextFn = function getContext() {
+        return this.reactContext;
+    }.bind(this);
+    var getStateFn = function getState() {
+        return this.getState();
+    }.bind(this);
+    this.actions = actionsFactory({
+        publish: publishFn,
+        getContext: getContextFn,
+        getState: getStateFn
+    });
+};
 
 AtomReactContext.prototype.addStore = function(store) {
     if ( !this.actions ) {
