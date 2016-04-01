@@ -35,6 +35,7 @@ var AtomReactContext = function AtomReactContext() {
     this.eventListeners = [];
     this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
+    this.lightStateChangeLog = false;
     this.beforeRenderCallback = undefined;
     this.beforeRenderCallback = undefined;
     this.logPublishedEvents = false;
@@ -54,6 +55,7 @@ module.exports = AtomReactContext;
 AtomReactContext.prototype.debugMode = function() {
     this.setPerfMesureMode("wasted");
     this.setVerboseStateChangeLog(true);
+    this.setLightStateChangeLog(false);
     this.setLogPublishedEvents(true);
     this.setLogPublishedCommands(true);
     this.setLogTransactions(true);
@@ -72,6 +74,9 @@ AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
 
 AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
     this.verboseStateChangeLog = bool;
+};
+AtomReactContext.prototype.setLightStateChangeLog = function(bool) {
+    this.lightStateChangeLog = bool;
 };
 AtomReactContext.prototype.setLogPublishedEvents = function(bool) {
     this.logPublishedEvents = bool;
@@ -389,7 +394,9 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             var componentWithContext = reactContextHolder.childContextProviderFactory({componentProvider: componentProvider, context: reactContextHolder.context});
             if ( this.perfMesureMode !== "none" ) ReactPerf.start();
             ReactDOM.render(componentWithContext, this.mountConfig.domNode, function() {
-                console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
+                if ( this.verboseStateChangeLog || this.lightStateChangeLog ) {
+                    console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
+                }
                 if ( this.perfMesureMode !== "none" ) ReactPerf.stop();
                 switch(this.perfMesureMode) {
                     case "none": break;
@@ -465,7 +472,7 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
                  */
             }
         });
-    } else {
+    } else if ( this.lightStateChangeLog ) {
         console.debug("Rendering state",this.atom.get());
     }
 };

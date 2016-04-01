@@ -63,6 +63,11 @@ var WithActionsMixin = {
         atomReactContext: React.PropTypes.object.isRequired
     },
     componentWillMount: function() {
+        if ( !this.context.atomReactContext ) {
+            throw new Error("Hey! It seems your current application does not use AtomReact." +
+              "It is not allowed to use AtomReact components inside a non-AtomReact app!" +
+              "AtomReact being deprecated you should rather use Redux instead")
+        }
         this.actions = this.context.atomReactContext.actions;
     }
 };

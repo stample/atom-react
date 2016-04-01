@@ -2,6 +2,12 @@ Atom-React
 ==========
 
 
+# Deprecated
+
+Use [Redux](https://github.com/reactjs/redux) instead
+
+# Old
+
 Documentation in progress.
 
 
