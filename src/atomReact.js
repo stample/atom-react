@@ -71,7 +71,7 @@ var doLogNonAtomReactWarning = function() {
 
 var WithActionsMixin = {
     contextTypes: {
-        atomReactContext: React.PropTypes.object.isRequired
+        atomReactContext: React.PropTypes.object
     },
     componentWillMount: function() {
         if ( !this.context.atomReactContext ) {
@@ -100,7 +100,7 @@ exports.WithCursorLinkingMixin = WithCursorLinkingMixin;
 
 var WithTransactMixin = {
     contextTypes: {
-        atom: React.PropTypes.instanceOf(Atom).isRequired
+        atom: React.PropTypes.instanceOf(Atom)
     },
     transact: function(tasks) {
         this.context.atom.transact(tasks);
@@ -111,7 +111,7 @@ exports.WithTransactMixin = WithTransactMixin;
 
 var WithEventPublisherMixin = {
     contextTypes: {
-        publishEvents: React.PropTypes.func.isRequired
+        publishEvents: React.PropTypes.func
     },
     publish: function() {
         var array = ArgumentsOrArray(arguments);
@@ -122,7 +122,7 @@ exports.WithEventPublisherMixin = WithEventPublisherMixin;
 
 var WithCommandPublisherMixin = {
     contextTypes: {
-        publishCommand: React.PropTypes.func.isRequired
+        publishCommand: React.PropTypes.func
     },
     publishCommand: function(command) {
         console.error("publishing commands is deprecated: use this.actions.actionName(...) instead");
@@ -134,8 +134,8 @@ exports.WithCommandPublisherMixin = WithCommandPublisherMixin;
 
 var WithEventListenerMixin = {
     contextTypes: {
-        addEventListener: React.PropTypes.func.isRequired,
-        removeEventListener: React.PropTypes.func.isRequired
+        addEventListener: React.PropTypes.func,
+        removeEventListener: React.PropTypes.func
     },
     addEventListener: function(listener) {
         this.context.addEventListener(listener);
