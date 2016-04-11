@@ -214,7 +214,19 @@ function addMixins(config) {
 
 
 
-function createPureClass(name,component) {
+function createPureClass() {
+    var name;
+    var component;
+    if ( arguments.length === 2 ) {
+        name = arguments[0];
+        component = arguments[1];
+    }
+    // Just to be retrocompatible with existing React components createClass...
+    else {
+        name = "AtomReactPureClass";
+        component = arguments[0];
+    }
+
     Preconditions.checkHasValue(name,"The name attribute is mandatory: this helps to debug compoennts!")
     Preconditions.checkHasValue(component,"The config attribute is mandatory!")
     Preconditions.checkCondition(!component.shouldComponentUpdate,"shouldComponentUpdate is already implemented for you");
@@ -233,6 +245,7 @@ function createPureClass(name,component) {
     return React.createClass(component);
 }
 exports.createPureClass = createPureClass;
+exports.createClass = createPureClass;
 
 var PropTypes = {
     isCursor: React.PropTypes.instanceOf(AtomCursor).isRequired,
