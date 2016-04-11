@@ -387,7 +387,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
     try {
         this.logStateBeforeRender();
         var timeBeforeRendering = Date.now();
-        atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
+        // atomToRender.doWithLock("Atom state should not be modified during the render phase",function() {
             // TODO 0.13 temporary ?, See https://github.com/facebook/react/issues/3392
             var componentFactory = this.mountConfig.reactElementFactory;
             var componentProvider = function() { return componentFactory(props); };
@@ -406,7 +406,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
                     default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
                 }
             }.bind(this));
-        }.bind(this));
+        // }.bind(this));
     } catch (error) {
         console.error("Could not render state", atomToRender.get());
         console.error(error);
