@@ -14,26 +14,16 @@ var AtomReactEvent = require("./atomReactEvent");
 var AtomReactCommand = require("./atomReactCommand");
 
 
-// With NODE_ENV=production, React does not have perf module
-// see https://github.com/facebook/react/issues/4107
-var hasPerfPlugin = (process.env.NODE_ENV !== "production");
-var ReactPerf;
-if (hasPerfPlugin) {
-    ReactPerf = require("react-addons-perf");
-}
-
 // For render the cursors are memoized
 var AtomCursorMemoizedOption = {memoized: true};
 
 
 var AtomReactContext = function AtomReactContext() {
-    this.recorder = new AtomReactRecorder(this);
     this.stores = [];
     this.actions = undefined;
     this.reactContext = {};
     this.memoizedReactContext = undefined;
     this.eventListeners = [];
-    this.perfMesureMode = "none";
     this.verboseStateChangeLog = false;
     this.lightStateChangeLog = false;
     this.beforeRenderCallback = undefined;
@@ -53,7 +43,6 @@ module.exports = AtomReactContext;
 
 
 AtomReactContext.prototype.debugMode = function() {
-    this.setPerfMesureMode("wasted");
     this.setVerboseStateChangeLog(true);
     this.setLightStateChangeLog(false);
     this.setLogPublishedEvents(true);
@@ -61,16 +50,6 @@ AtomReactContext.prototype.debugMode = function() {
     this.setLogTransactions(true);
 };
 
-AtomReactContext.prototype.setPerfMesureMode = function(perfMesureMode) {
-    if ( hasPerfPlugin ) {
-        this.perfMesureMode = perfMesureMode;
-    }
-    else {
-        if ( perfMesureMode != "none" ) {
-            console.warn("React is in production mode, and does not have Perf module. You won't be able to use AtomReact with setPerfMesureMode("+perfMesureMode+")");
-        }
-    }
-};
 
 AtomReactContext.prototype.setVerboseStateChangeLog = function(bool) {
     this.verboseStateChangeLog = bool;
@@ -214,9 +193,6 @@ AtomReactContext.prototype.beforeTransactionCommit = function(newState,previousS
     if ( shouldRender ) {
         if ( this.beforeRenderCallback ) this.beforeRenderCallback(this.atom.get());
         this.renderCurrentAtomState();
-        if ( this.recorder.isRecording() ) {
-            this.recorder.addRecord(newState);
-        }
     }
 };
 AtomReactContext.prototype.afterTransactionCommit = function(newState,previousState,transactionData) {
@@ -392,18 +368,9 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             var componentFactory = this.mountConfig.reactElementFactory;
             var componentProvider = function() { return componentFactory(props); };
             var componentWithContext = reactContextHolder.childContextProviderFactory({componentProvider: componentProvider, context: reactContextHolder.context});
-            if ( this.perfMesureMode !== "none" ) ReactPerf.start();
             ReactDOM.render(componentWithContext, this.mountConfig.domNode, function() {
                 if ( this.verboseStateChangeLog || this.lightStateChangeLog ) {
                     console.debug("Time to render in millies",Date.now()-timeBeforeRendering);
-                }
-                if ( this.perfMesureMode !== "none" ) ReactPerf.stop();
-                switch(this.perfMesureMode) {
-                    case "none": break;
-                    case "wasted": ReactPerf.printWasted(); break;
-                    case "inclusive": ReactPerf.printInclusive(); break;
-                    case "exclusive": ReactPerf.printExclusive(); break;
-                    default: throw new Error("Unknown perfMesureMode="+this.perfMesureMode);
                 }
             }.bind(this));
         // }.bind(this));
@@ -462,135 +429,9 @@ AtomReactContext.prototype.logStateBeforeRender = function() {
             else if ( !Preconditions.hasValue(beforeValue) && Preconditions.hasValue(afterValue) ) {
                 console.debug("%cX","color: green; background-color: green;","["+path.toString()+"][",afterValue,"]");
             }
-            else {
-                // TODO it seems this case happen for null vs undefined
-                // For now we fail safe and simply bypass this log statement: to handle later!
-                /*
-                 console.error("before",beforeValue);
-                 console.error("after",afterValue);
-                 throw new Error("unexpected case!!!");
-                 */
-            }
         });
     } else if ( this.lightStateChangeLog ) {
         console.debug("Rendering state",this.atom.get());
     }
 };
-
-
-
-
-
-// TODO it may be fun to record cursor position !!!
-
-// TODO how to prevent the user to interacting during the replay???
-
-var AtomReactRecorder = function AtomReactRecorder(atomReactContext) {
-    Preconditions.checkHasValue(atomReactContext);
-    this.context = atomReactContext;
-
-    this.recording = false;
-    this.stateRecords = undefined;
-
-    this.replaying = false;
-};
-
-AtomReactRecorder.prototype.isRecording = function() {
-    return this.recording;
-};
-AtomReactRecorder.prototype.isReplaying = function() {
-    return this.replaying;
-};
-
-AtomReactRecorder.prototype.startRecording = function() {
-    console.debug("Start recording");
-    this.recording = true;
-    this.stateRecords = [];
-
-    // The first item of the record is the current atom state
-    var currentAtomState = this.context.atom.get();
-    this.addRecord(currentAtomState);
-};
-AtomReactRecorder.prototype.addRecord = function(state) {
-    Preconditions.checkHasValue(state);
-    Preconditions.checkCondition(this.isRecording());
-    console.debug("Adding record",state);
-    this.stateRecords.push({
-        time: Date.now(),
-        state: state
-    });
-};
-AtomReactRecorder.prototype.stopRecording = function() {
-    this.recording = false;
-};
-
-AtomReactRecorder.prototype.replayStateRecord = function(record) {
-    Preconditions.checkHasValue(record);
-    Preconditions.checkHasValue(record.state);
-    Preconditions.checkCondition(!this.isRecording());
-    // TODO not sure it's nice to create a different atom for each replayed state...
-    var replayStateAtom = new Atom({initialState: record.state});
-    this.context.renderAtomState(replayStateAtom);
-};
-
-
-
-
-AtomReactRecorder.prototype.replay = function(speedFactor) {
-    Preconditions.checkCondition(!this.isRecording());
-    Preconditions.checkCondition(!this.isReplaying());
-
-    if ( !this.stateRecords || this.stateRecords.length < 1 ) {
-        console.error("At least 2 records are needed to replay");
-        return;
-    }
-
-    try {
-        this.replaying = true;
-        var speedFactor = speedFactor || 1;
-        var firstRecord = this.stateRecords[0];
-        var lastRecord = this.stateRecords[this.stateRecords.length - 1];
-        var totalRecordTime = lastRecord.time - firstRecord.time;
-        Preconditions.checkCondition(totalRecordTime >= 0);
-
-        var records = this.stateRecords.map(function(record) {
-            // How much time after the beginning this record was added
-            var startOffset = record.time - firstRecord.time;
-            Preconditions.checkCondition(startOffset >= 0);
-            return {
-                record: record,
-                offset: startOffset
-            }
-        });
-
-        // The current time is actually affected by the speed factor
-        var currentReplayTime = 0;
-        var currentRecordIndex = 0;
-        var tickPace = 10; // TODO which value to choose?
-        var replayInterval = setInterval(function() {
-            this.replayStateRecord(records[currentRecordIndex].record);
-            var hasNextRecord = (records.length > currentRecordIndex + 1);
-            // TODO create replay widget and send events to this widget
-            if ( hasNextRecord ) {
-                var nextRecord = records[currentRecordIndex + 1];
-                var isTimeToPlayNextRecord = nextRecord.offset <= currentReplayTime;
-                if ( isTimeToPlayNextRecord ) {
-                    currentRecordIndex = currentRecordIndex + 1;
-                    console.debug("Playing to next record");
-                }
-                currentReplayTime = currentReplayTime + (tickPace * speedFactor);
-            } else {
-                console.debug("End of replay");
-                clearInterval(replayInterval);
-            }
-        }.bind(this),tickPace);
-    } catch (error) {
-        console.error("Error during replay of state records",this.stateRecords,e);
-        throw error;
-    } finally {
-        this.replaying = false;
-    }
-
-};
-
 

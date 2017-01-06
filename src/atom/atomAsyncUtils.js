@@ -1,7 +1,6 @@
 'use strict';
 
 
-var Q = require("q");
 var _ = require("lodash");
 
 
@@ -53,32 +52,30 @@ exports.AtomAsyncValue = AtomAsyncValue;
 
 
 // This returns a promise of the swapped result if the swap was successful
-function setupAsyncValueSwapping(atom,path,asyncValue,promise,logCompletion) {
-    var deferred = Q.defer();
-    Q(promise)
-        .then(function asyncCompletionSuccess(data) {
-            var swapped = atom.compareAndSwapPathValue(path,asyncValue,asyncValue.toSuccess(data));
-            if ( logCompletion ) {
-                console.debug("Async value completion",path,"Swap success=",swapped);
-            }
-            if ( swapped ) {
-                deferred.resolve(data);
-            } else {
-                deferred.reject(new Error("Async value completion for path "+path+" but swap=false"));
-            }
-        })
-        .fail(function asyncCompletionError(error) {
-            var swapped = atom.compareAndSwapPathValue(path,asyncValue,asyncValue.toError(error));
-            if ( logCompletion ) {
-                console.error("Async value completion error",path,"Swap success=",swapped);
-                console.error(error.stack ? error.stack : error);
-            }
-            deferred.reject(error);
-        })
-        .done();
-
-    return deferred.promise;
-};
+function setupAsyncValueSwapping(atom, path, asyncValue, promise, logCompletion) {
+  return new Promise(function (resolve, reject) {
+    promise.then(
+      function asyncCompletionSuccess(data) {
+        var swapped = atom.compareAndSwapPathValue(path, asyncValue, asyncValue.toSuccess(data));
+        if (logCompletion) {
+          console.debug("Async value completion", path, "Swap success=", swapped);
+        }
+        if (swapped) {
+          resolve(data);
+        } else {
+          reject(new Error("Async value completion for path " + path + " but swap=false"));
+        }
+      },
+      function asyncCompletionError(error) {
+        var swapped = atom.compareAndSwapPathValue(path, asyncValue, asyncValue.toError(error));
+        if (logCompletion) {
+          console.error("Async value completion error", path, "Swap success=", swapped);
+          console.error(error.stack ? error.stack : error);
+        }
+        reject(error);
+      })
+  });
+}
 
 
 

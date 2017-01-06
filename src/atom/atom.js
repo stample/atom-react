@@ -9,8 +9,6 @@ var AtomCursor = require("./atomCursor");
 
 
 
-var CanGroupLogs = console.group && console.groupEnd;
-
 var NOOP = function noop() { } // Convenient but probably not performant: TODO ?
 
 /**
@@ -98,9 +96,6 @@ Atom.prototype.transact = function(tasks) {
         tasks();
     }
     else {
-        if ( CanGroupLogs ) {
-            console.group("Atom transaction");
-        }
         this.openTransaction();
         try {
             tasks();
@@ -121,10 +116,6 @@ Atom.prototype.transact = function(tasks) {
             setTimeout(function() {
                 throw error;
             },0);
-        } finally {
-            if ( CanGroupLogs ) {
-                console.groupEnd();
-            }
         }
     }
 };
