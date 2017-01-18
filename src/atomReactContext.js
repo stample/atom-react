@@ -176,10 +176,10 @@ AtomReactContext.prototype.removeErrorListener = function(listener) {
         throw new Error("listener not found");
     }
 };
-AtomReactContext.prototype.notifyErrorListeners = function (error) {
+AtomReactContext.prototype.notifyErrorListeners = function(error,message) {
   this.errorListeners.forEach(function (listener) {
     try {
-      listener(error);
+      listener({error: error, message: message || "N/A"});
     } catch (listenerError) {
       console.error("notifyErrorListeners error", listenerError, error);
     }
