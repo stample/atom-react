@@ -386,7 +386,7 @@ function ChildContextProviderFactory(context) {
 
     // TODO we are very permissive on the childContextTypes (is it a good idea?)
     var childContextTypes = {};
-    _.keys(context).forEach(function(contextKey) {
+    Object.keys(context).forEach(function(contextKey) {
         childContextTypes[contextKey] = React.PropTypes.any.isRequired
     });
 

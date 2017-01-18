@@ -166,13 +166,17 @@ AtomCursor.prototype.unshift = function(value) {
 AtomCursor.prototype.without = function(value) {
     var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call without on an array. "+this.atomPath);
-    var newList = _.without(list,value);
+    var newList = list.filter(function(v) {
+        return v !== value;
+    });
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.filter = function(value) {
     var list = this.getOrEmptyArray();
     ensureIsArray(list,"can only call filter on an array. "+this.atomPath);
-    var newList = _.filter(list,value);
+    var newList = list.filter(function(v) {
+        return v === value
+    });
     this.atom.setPathValue(this.atomPath,newList);
 };
 AtomCursor.prototype.reduce = function(reducer,event) {
