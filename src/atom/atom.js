@@ -105,17 +105,12 @@ Atom.prototype.transact = function(tasks) {
             var transactionData = this.commitTransaction();
             try {
                 this.afterTransactionCommit(this.state,previousState,transactionData);
-            } catch(error) {
-                console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited -> "+error.message);
-                console.error( error.stack ? error.stack : error );
+            } catch (error) {
+                console.error("Error in 'afterTransactionCommit' callback. The transaction will still be commited -> ",error);
             }
         } catch (error) {
-            console.error("Error during atom transaction! rollback!");
-            this.rollbackTransaction();
-            // This is a shitty solution but at least we are sure that error will always be logged correctly!
-            setTimeout(function() {
-                throw error;
-            },0);
+          this.rollbackTransaction();
+          throw error;
         }
     }
 };

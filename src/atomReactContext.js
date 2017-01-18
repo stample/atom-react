@@ -11,7 +11,6 @@ var AtomCursor = require("./atom/atomCursor");
 var AtomUtils = require("./atom/atomUtils");
 
 var AtomReactEvent = require("./atomReactEvent");
-var AtomReactCommand = require("./atomReactCommand");
 
 
 // For render the cursors are memoized
@@ -24,14 +23,13 @@ var AtomReactContext = function AtomReactContext() {
     this.reactContext = {};
     this.memoizedReactContext = undefined;
     this.eventListeners = [];
+    this.errorListeners = [];
     this.verboseStateChangeLog = false;
     this.lightStateChangeLog = false;
     this.beforeRenderCallback = undefined;
     this.beforeRenderCallback = undefined;
     this.logPublishedEvents = false;
-    this.logPublishedCommands = false;
     this.logTransactions = false;
-    this.queuedCommands = [];
 
     this.atom = new Atom({
         beforeTransactionCommit: this.beforeTransactionCommit.bind(this),
@@ -46,7 +44,6 @@ AtomReactContext.prototype.debugMode = function() {
     this.setVerboseStateChangeLog(true);
     this.setLightStateChangeLog(false);
     this.setLogPublishedEvents(true);
-    this.setLogPublishedCommands(true);
     this.setLogTransactions(true);
 };
 
@@ -59,9 +56,6 @@ AtomReactContext.prototype.setLightStateChangeLog = function(bool) {
 };
 AtomReactContext.prototype.setLogPublishedEvents = function(bool) {
     this.logPublishedEvents = bool;
-};
-AtomReactContext.prototype.setLogPublishedCommands = function(bool) {
-    this.logPublishedCommands = bool;
 };
 AtomReactContext.prototype.setLogTransactions = function(bool) {
     this.logTransactions = bool;
@@ -141,7 +135,6 @@ AtomReactContext.prototype.getMemoizedReactContextHolder = function(atomToRender
             atom: atomToRender,
             publishEvent: this.publishEvent.bind(this),
             publishEvents: this.publishEvents.bind(this),
-            publishCommand: this.publishCommand.bind(this),
             addEventListener: this.addEventListener.bind(this),
             removeEventListener: this.removeEventListener.bind(this)
         };
@@ -157,6 +150,8 @@ AtomReactContext.prototype.getMemoizedReactContextHolder = function(atomToRender
 
 
 
+
+
 AtomReactContext.prototype.addEventListener = function(listener) {
     this.eventListeners.push(listener);
 };
@@ -168,6 +163,31 @@ AtomReactContext.prototype.removeEventListener = function(listener) {
         throw new Error("listener not found");
     }
 };
+
+
+AtomReactContext.prototype.addErrorListener = function(listener) {
+    this.errorListeners.push(listener);
+};
+AtomReactContext.prototype.removeErrorListener = function(listener) {
+    var index = this.errorListeners.indexOf(listener);
+    if (index > -1) {
+        this.errorListeners.splice(index, 1);
+    } else {
+        throw new Error("listener not found");
+    }
+};
+AtomReactContext.prototype.notifyErrorListeners = function (error) {
+  this.errorListeners.forEach(function (listener) {
+    try {
+      listener(error);
+    } catch (listenerError) {
+      console.error("notifyErrorListeners error", listenerError, error);
+    }
+  });
+};
+
+
+
 
 AtomReactContext.prototype.beforeRender = function(callback) {
     this.beforeRenderCallback = callback;
@@ -203,74 +223,6 @@ AtomReactContext.prototype.afterTransactionCommit = function(newState,previousSt
     if ( shouldRender && this.afterRenderCallback ) this.afterRenderCallback(newState,previousState);
 };
 
-
-// Commands can be queued in publication order, and always executed serially
-AtomReactContext.prototype.queueCommand = function(command) {
-    this.queuedCommands.push(command);
-    this.setupQueuedCommandFlushing();
-};
-
-// Not sure it's a good idea, but makes sure any queued command gets published in all cases
-AtomReactContext.prototype.setupQueuedCommandFlushing = function() {
-    if ( !this.flushQueuedCommandsTimer ) {
-        this.flushQueuedCommandsTimer = setTimeout(function() {
-            this.doFlushQueuedCommands();
-            this.flushQueuedCommandsTimer = undefined;
-        }.bind(this),0);
-    }
-};
-
-
-AtomReactContext.prototype.doFlushQueuedCommands = function() {
-    if ( this.queuedCommands.length > 0 ) {
-        console.debug("Flushing queued commands",this.queuedCommands.length);
-        while ( this.queuedCommands.length > 0 ) {
-            var cmd = this.queuedCommands.shift();
-            this.publishCommand(cmd);
-        }
-    }
-};
-
-
-
-AtomReactContext.prototype.publishCommand = function(command) {
-    console.error("command publication is deprecated, use actions instead!");
-    if ( this.logPublishedCommands ) {
-        console.debug("Publishing command: %c"+command.name,"color: red;",command.data);
-    }
-    Preconditions.checkCondition(command instanceof AtomReactCommand,"Command fired is not an AtomReactCommand! " + command);
-    var self = this;
-    var commandHandlerByStore = undefined;
-    var returnedEvents = undefined;
-    this.atom.doWithLock("A command handler should not modify the atom state!",function() {
-        self.stores.forEach(function(store) {
-            try {
-                var eventOrEvents = store.storeManager.handleCommand(command);
-                if ( eventOrEvents ) {
-                    if ( commandHandlerByStore ) {
-                        throw new Error("Command can't be handled by store " + store.store.nameOrPath +
-                          " because it was already handled by " + commandHandlerByStore.store.nameOrPath);
-                    }
-                    commandHandlerByStore = store;
-                    if ( eventOrEvents instanceof Array ) {
-                        returnedEvents = eventOrEvents;
-                    } else {
-                        returnedEvents = [eventOrEvents];
-                    }
-                }
-            } catch (error) {
-                var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle command";
-                console.error(errorMessage,command);
-                throw error;
-            }
-        });
-    });
-    if ( !commandHandlerByStore ) {
-        throw new Error("Commands should be handled by exactly one command handler");
-    }
-    this.publishEvents(returnedEvents);
-};
-
 // Publish multiple events in the same transaction. Publishing order remains
 AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
     var eventArray = undefined;
@@ -283,7 +235,6 @@ AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
         eventArray.forEach(function(event) {
             this.doPublishEvent(event);
         }.bind(this));
-        this.doFlushQueuedCommands();
     }.bind(this));
 };
 
@@ -291,7 +242,6 @@ AtomReactContext.prototype.publishEvents = function(arrayOrArguments) {
 AtomReactContext.prototype.publishEvent = function(event) {
     this.transact(function() {
         this.doPublishEvent(event);
-        this.doFlushQueuedCommands();
     }.bind(this));
 };
 
@@ -306,19 +256,20 @@ AtomReactContext.prototype.doPublishEvent = function(event) {
             // TODO maybe stores should be regular event listeners?
             store.storeManager.handleEvent(event);
         } catch (error) {
-            var errorMessage = "Store ["+store.store.nameOrPath+"] could not handle event";
-            console.error(errorMessage,event,error);
+            var msg = "Store ["+store.store.nameOrPath+"] could not handle event";
+            this.notifyErrorListeners(error,msg);
             throw error;
         }
-    });
+    }.bind(this));
     this.eventListeners.forEach(function(listener) {
         try {
             listener(event);
         } catch (error) {
-            console.error("Event listener could not handle event",event,error);
+            var msg = "Event listener could not handle event " + event.type + " => " + listener;
+            this.notifyErrorListeners(error,msg);
             throw error;
         }
-    });
+    }.bind(this));
 };
 
 // TODO this method is probably useless
@@ -344,9 +295,10 @@ AtomReactContext.prototype.transact = function(task) {
     catch (e) {
         if ( !this.firstTransactionStatus ) {
             this.firstTransactionStatus = "error";
-            console.error("Serious error on application startup!");
+            var msg = "Serious error on application startup!";
+            this.notifyErrorListeners(e,msg);
+            console.error(msg,e);
         }
-        console.error(e);
         throw e;
     }
 };
@@ -375,8 +327,7 @@ AtomReactContext.prototype.renderAtomState = function(atomToRender) {
             }.bind(this));
         // }.bind(this));
     } catch (error) {
-        console.error("Could not render state", atomToRender.get());
-        console.error(error);
+        this.notifyErrorListeners(error,"AtomReact rendering error");
         throw error;
     }
 };

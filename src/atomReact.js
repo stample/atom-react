@@ -14,7 +14,6 @@ var AtomCursor = require("./atom/atomCursor");
 var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 
 var AtomReactEvent = require("./atomReactEvent");
-var AtomReactCommand = require("./atomReactCommand");
 
 
 
@@ -60,7 +59,7 @@ exports.WithPureRenderMixin = WithPureRenderMixin;
 
 
 var doLogNonAtomReactWarning = function() {
-    console.error("Hey! It seems your current application does not use AtomReact." +
+    console.warn("Hey! It seems your current application does not use AtomReact." +
       "It is not allowed to use AtomReact components inside a non-AtomReact app!" +
       "AtomReact being deprecated you should rather use Redux instead");
     doLogNonAtomReactWarning = function() { }; // NOOP: log only once!
@@ -119,17 +118,6 @@ var WithEventPublisherMixin = {
     }
 };
 exports.WithEventPublisherMixin = WithEventPublisherMixin;
-
-var WithCommandPublisherMixin = {
-    contextTypes: {
-        publishCommand: React.PropTypes.func
-    },
-    publishCommand: function(command) {
-        console.error("publishing commands is deprecated: use this.actions.actionName(...) instead");
-        this.context.publishCommand(command);
-    }
-};
-exports.WithCommandPublisherMixin = WithCommandPublisherMixin;
 
 
 var WithEventListenerMixin = {
@@ -206,7 +194,6 @@ function addMixins(config) {
     config.mixins.push(WithPureRenderMixin);
     config.mixins.push(WithCursorLinkingMixin);
     config.mixins.push(WithTransactMixin);
-    config.mixins.push(WithCommandPublisherMixin);
     config.mixins.push(WithEventPublisherMixin);
     config.mixins.push(WithEventListenerMixin);
     config.mixins.push(WithActionsMixin);
@@ -275,7 +262,6 @@ exports.DeepFreeze = DeepFreeze;
 
 
 exports.Event = AtomReactEvent;
-exports.Command = AtomReactCommand;
 
 
 exports.EmptyArray = Immutables.EmptyArray;
