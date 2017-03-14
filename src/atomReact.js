@@ -59,7 +59,7 @@ exports.WithPureRenderMixin = WithPureRenderMixin;
 
 
 var doLogNonAtomReactWarning = function() {
-    console.warn("Hey! It seems your current application does not use AtomReact." +
+    console.warn("Hey! It seems your current application does not use AtomReact nor provide actions in context." +
       "It is not allowed to use AtomReact components inside a non-AtomReact app!" +
       "AtomReact being deprecated you should rather use Redux instead");
     doLogNonAtomReactWarning = function() { }; // NOOP: log only once!
@@ -70,14 +70,17 @@ var doLogNonAtomReactWarning = function() {
 
 var WithActionsMixin = {
     contextTypes: {
-        atomReactContext: React.PropTypes.object
+        atomReactContext: React.PropTypes.object,
+        actions: React.PropTypes.object
     },
     componentWillMount: function() {
-        if ( !this.context.atomReactContext ) {
+        var contextActions = this.context.atomReactContext ? this.context.atomReactContext.actions : undefined;
+        var actions = this.context.actions || contextActions;
+        if ( !actions ) {
             doLogNonAtomReactWarning();
         }
         else {
-            this.actions = this.context.atomReactContext.actions;
+            this.actions = actions;
         }
     }
 };
