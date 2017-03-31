@@ -216,12 +216,7 @@ function createPureClass() {
         name = "AtomReactPureClass";
         component = arguments[0];
     }
-
-    Preconditions.checkHasValue(name,"The name attribute is mandatory: this helps to debug compoennts!")
-    Preconditions.checkHasValue(component,"The config attribute is mandatory!")
-    Preconditions.checkCondition(!component.shouldComponentUpdate,"shouldComponentUpdate is already implemented for you");
-    Preconditions.checkCondition(component.render,"render() must be implemented");
-    Preconditions.checkCondition(component.propTypes,"propTypes must be provided: this is the component interface!");
+  
 
     // Unfortunately, the displayName can't be infered from the variable name during JSX compilation :(
     // See http://facebook.github.io/react/docs/component-specs.html#displayname
