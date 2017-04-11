@@ -15,6 +15,7 @@ var AtomAsyncValue = require("./atom/atomAsyncUtils").AtomAsyncValue;
 
 var AtomReactEvent = require("./atomReactEvent");
 
+var _ = require("lodash");
 
 
 
@@ -85,6 +86,42 @@ var WithActionsMixin = {
     }
 };
 exports.WithActionsMixin = WithActionsMixin;
+
+
+exports.connectActions = function connectActionsHOC(WrappedComponent) {
+    var displayName = (function() {
+        var originalDisplayName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+        return "connectActions("+originalDisplayName+")";
+    })();
+  
+    return React.createClass({
+        
+      displayName: displayName,
+      
+      contextTypes: {
+        atomReactContext: React.PropTypes.object,
+        actions: React.PropTypes.object
+      },
+      
+      render: function() {
+          
+        var contextActions = this.context.atomReactContext ? this.context.atomReactContext.actions : undefined;
+        var actions = this.context.actions || contextActions;
+        if ( !actions ) {
+          doLogNonAtomReactWarning();
+        }
+        
+        var injectedProps = {
+          actions: actions
+        };
+        
+        var props = _.assign({},this.props,injectedProps);
+        
+        return React.createElement(WrappedComponent,props, undefined);
+      }
+      
+    });
+};
 
 
 var WithCursorLinkingMixin = {
